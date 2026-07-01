@@ -1,5 +1,3 @@
 #!/usr/bin/env bash
-set -e
-cd "$(dirname "$0")/.."
-source .venv/bin/activate 2>/dev/null || true
-python3 app/main.py
+cd /home/pi/hoshinoyakata_agent
+exec /home/pi/hoshinoyakata_agent/venv/bin/python3 app.py

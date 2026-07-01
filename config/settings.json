@@ -1,19 +1,10 @@
 {
-  "site_name": "星の館 全天カメラ AIエージェント",
-  "camera": {
-    "image_width": 1920,
-    "image_height": 1080,
-    "preview_width": 1280,
-    "preview_height": 720,
-    "capture_command": "rpicam-still",
-    "video_command": "rpicam-vid"
-  },
-  "sensor": {
-    "bme280_enabled": true,
-    "i2c_address": "0x76"
-  },
-  "server": {
-    "host": "0.0.0.0",
-    "port": 5000
-  }
+  "version": "1.1-dev",
+  "location": "Hoshinoyakata, Tamba City, Hyogo, Japan",
+  "capture_width": 1280,
+  "capture_height": 960,
+  "video_fps": 10,
+  "video_seconds": 10,
+  "auto_update": true,
+  "sqm_manual": 20.8
 }

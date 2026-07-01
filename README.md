@@ -1,27 +1,23 @@
-# 星の館 AllSky AIエージェント Ver.1.0 開発版
+# 星の館 AllSky AIエージェント Ver.1.1-dev
 
-Raspberry Pi 5 + Pi Camera 用の全天カメラWebアプリです。
+## 追加機能
+- MP4タイムラプス作成ボタン
+- 雲量の簡易AI解析
+- BME280実機読み取り準備
+- 月齢・SQM表示
+- GitHub更新ボタン
+- systemd常駐、自動再起動
 
-## 起動
+## ラズパイ側
+既にサービス設定済みなら、GitHub DesktopでPush後、5分以内に自動更新されます。
+手動更新する場合:
+
 ```bash
 cd ~/hoshinoyakata_agent
 git pull
-python3 -m venv venv --system-site-packages
 venv/bin/pip install -r requirements.txt
-venv/bin/python3 app.py
+sudo systemctl restart hoshinoyakata-allsky
 ```
 
-ブラウザで `http://192.168.1.20:5000` を開きます。
-
-## できること
-- ライブ画像表示
-- ワンクリック撮影・JPEG保存
-- 最新画像一覧
-- 月齢表示
-- 雲量の簡易AI解析
-- BME280表示枠（未接続時は準備中）
-- SQM表示枠（未接続時は準備中）
-- GitHub更新ボタン
-
-## 自動更新サービス準備
-`scripts/install_autoupdate.sh` は次版でsystemd登録まで行います。
+## 開く
+http://192.168.1.20:5000

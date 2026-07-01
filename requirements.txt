@@ -1,4 +1,4 @@
 flask
 pillow
+opencv-python
 numpy
-opencv-python-headless

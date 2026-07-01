@@ -1,4 +1,2 @@
 #!/usr/bin/env bash
-set -e
-cd "$(dirname "$0")/.."
-echo "自動更新サービスは次版でsystemd登録します。現在はWeb画面の更新ボタンを使ってください。"
+(crontab -l 2>/dev/null | grep -v hoshinoyakata_agent; echo '*/5 * * * * cd /home/pi/hoshinoyakata_agent && git pull && sudo systemctl restart hoshinoyakata-allsky') | crontab -
