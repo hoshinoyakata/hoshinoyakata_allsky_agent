@@ -1,8 +1,64 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>星の館 AllSky AI Agent</title><link rel="stylesheet" href="/static/style.css"></head><body>
-<header><div class="brand">🌌 星の館 全天カメラ AIエージェント <span>Ver.{{version}}</span></div><div id="clock">--</div></header>
-<main class="grid">
-<section class="panel main"><h2>🟢 ライブビュー（全天）</h2><div class="skywrap"><img id="sky" src="/static/noimage.svg"><div class="dir n">N</div><div class="dir e">E</div><div class="dir w">W</div><div class="dir s">S</div></div><div class="buttons"><button onclick="capture()">📷 写真を撮影</button><button onclick="refreshStatus()">🔄 最新画像に更新</button><button onclick="full()">⛶ 全画面</button><button onclick="video()">🎥 MP4作成</button></div><div id="message"></div></section>
-<aside class="panel"><h2>🌡 環境</h2><div class="cards"><div>温度<b id="temp">--</b></div><div>湿度<b id="hum">--</b></div><div>気圧<b id="press">--</b></div></div><h2>☁ AI雲量</h2><div class="big"><span id="cloud">--</span>%</div><h2>🌙 月齢</h2><div class="big moon"><span id="moon">--</span></div><p id="moonLabel">--</p><h2>⭐ SQM</h2><div class="big sqm"><span id="sqm">--</span></div></aside>
-<aside class="panel"><h2>🔄 システム/更新</h2><p>時刻: <b id="time">--</b></p><p>状態: <b class="ok">正常</b></p><button onclick="updateNow()">⬆ 今すぐ更新</button><p class="small">GitHub Push後、ラズパイは5分以内に自動更新します。</p><h2>🎞 動画</h2><div id="videos"></div></aside>
-<section class="panel thumbs"><h2>📷 最新画像</h2><div id="thumbs"></div></section>
-</main><footer>© Hoshinoyakata Observatory</footer><script src="/static/app.js"></script></body></html>
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>星の館 全天カメラ AIエージェント</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1>🌌 星の館 全天カメラ AIエージェント <span>Ver.{{ version }}</span></h1>
+    <p id="subtitle">Hoshinoyakata All-Sky AI Agent</p>
+  </div>
+  <div class="top-actions">
+    <button onclick="captureNow()">📷 写真を撮影</button>
+    <button onclick="makeVideo()">🎥 MP4作成</button>
+    <button onclick="runUpdate()">🔄 GitHub更新</button>
+  </div>
+</header>
+
+<main>
+  <section class="panel sky-panel">
+    <h2>ライブビュー（全天）</h2>
+    <div id="skybox"><img id="sky" src="/static/noimage.svg" alt="latest allsky"></div>
+    <div class="buttons">
+      <button onclick="captureNow()">📷 写真を撮影</button>
+      <button onclick="reloadImage()">🔁 最新画像に更新</button>
+      <button onclick="fullscreenSky()">⛶ 全画面表示</button>
+    </div>
+    <div id="message"></div>
+  </section>
+
+  <aside class="panel status-panel">
+    <h2>現在の状況</h2>
+    <div class="grid3">
+      <div class="mini"><span>🌡 温度</span><b id="temp">準備中</b></div>
+      <div class="mini"><span>💧 湿度</span><b id="hum">準備中</b></div>
+      <div class="mini"><span>🌬 気圧</span><b id="press">準備中</b></div>
+      <div class="mini"><span>☔ 雨</span><b id="rain">未設定</b></div>
+      <div class="mini"><span>🖥 更新</span><b id="version">-</b></div>
+      <div class="mini"><span>⏱ 時刻</span><b id="now">-</b></div>
+    </div>
+
+    <div class="big-metric cloud">☁ AI雲量 <strong id="cloud">--%</strong></div>
+    <div class="big-metric">🌙 月齢 <strong id="moon">--</strong><small id="moonLabel"></small></div>
+    <div class="big-metric">⭐ SQM <strong id="sqm">--</strong></div>
+    <div class="scorebox"><span>🔭 観望指数</span><strong id="score">--</strong><em id="scoreLabel">監視中</em></div>
+  </aside>
+
+  <section class="panel list-panel">
+    <h2>保存画像</h2>
+    <div id="captures" class="links"></div>
+  </section>
+
+  <section class="panel list-panel">
+    <h2>動画</h2>
+    <div id="videos" class="links">まだありません</div>
+  </section>
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

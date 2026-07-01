@@ -1,10 +1,10 @@
 {
-  "version": "1.1-dev",
-  "location": "Hoshinoyakata, Tamba City, Hyogo, Japan",
-  "capture_width": 1280,
-  "capture_height": 960,
+  "sqm_manual": 20.8,
   "video_fps": 10,
-  "video_seconds": 10,
-  "auto_update": true,
-  "sqm_manual": 20.8
+  "camera_width": 1280,
+  "camera_height": 960,
+  "auto_capture_enabled": false,
+  "auto_capture_interval_sec": 60,
+  "rain_gpio": null,
+  "bme280_address": "0x76"
 }

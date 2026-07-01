@@ -3,6 +3,7 @@ set -e
 cd /home/pi/hoshinoyakata_agent
 git pull
 if [ -d venv ]; then
-  venv/bin/pip install -r requirements.txt || true
+  venv/bin/python3 -m pip install -r requirements.txt || true
 fi
-sudo systemctl restart hoshinoyakata-allsky || true
+sudo systemctl daemon-reload
+sudo systemctl restart hoshinoyakata-allsky

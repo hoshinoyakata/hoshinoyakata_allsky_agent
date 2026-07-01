@@ -2,3 +2,5 @@ flask
 pillow
 opencv-python
 numpy
+adafruit-circuitpython-bme280
+gpiozero

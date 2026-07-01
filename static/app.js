@@ -1,16 +1,56 @@
-async function api(url, opt={}){ const r=await fetch(url,opt); return await r.json(); }
-function $(id){return document.getElementById(id)}
-async function refreshStatus(){
- const s=await api('/status'); $('clock').textContent=s.time; $('time').textContent=s.time;
- if(s.latest_url){ $('sky').src=s.latest_url+'?t='+Date.now(); }
- $('cloud').textContent=s.cloud ?? '--'; $('moon').textContent=s.moon_age; $('moonLabel').textContent=s.moon_label;
- $('sqm').textContent=s.sqm ?? '--';
- const b=s.bme280||{}; $('temp').textContent=b.temperature==null?'準備中':b.temperature+'℃'; $('hum').textContent=b.humidity==null?'準備中':b.humidity+'%'; $('press').textContent=b.pressure==null?'準備中':b.pressure+'hPa';
- $('thumbs').innerHTML=(s.captures||[]).map(f=>`<img src="/images/${f}?t=${Date.now()}" title="${f}">`).join('');
- $('videos').innerHTML=(s.videos||[]).map(f=>`<a href="/videos/${f}" target="_blank">${f}</a>`).join('<br>')||'まだありません';
+async function jsonFetch(url, options={}){
+  const r = await fetch(url, options);
+  return await r.json();
 }
-async function capture(){ $('message').textContent='撮影中...'; const j=await api('/capture',{method:'POST'}); $('message').textContent=j.ok?'保存しました: '+j.file:'失敗: '+j.message; await refreshStatus(); }
-async function video(){ $('message').textContent='MP4作成中...'; const j=await api('/video',{method:'POST'}); $('message').innerHTML=j.ok?`MP4作成: <a href="${j.url}" target="_blank">${j.file}</a>`:'失敗: '+j.message; await refreshStatus(); }
-async function updateNow(){ if(!confirm('GitHubから更新しますか？')) return; const j=await api('/update',{method:'POST'}); alert(j.message||JSON.stringify(j)); }
-function full(){ const el=document.querySelector('.skywrap'); if(el.requestFullscreen) el.requestFullscreen(); }
-setInterval(refreshStatus,3000); refreshStatus();
+function setText(id, text){ const e=document.getElementById(id); if(e) e.textContent=text; }
+function msg(t){ setText('message', t); }
+async function updateStatus(){
+  try{
+    const s = await jsonFetch('/status');
+    setText('version', s.version || '-');
+    setText('now', s.time || '-');
+    if(s.latest_url){ document.getElementById('sky').src = s.latest_url + '?t=' + Date.now(); }
+    setText('cloud', (s.cloud ?? '--') + '%');
+    setText('moon', s.moon_age ?? '--');
+    setText('moonLabel', s.moon_label || '');
+    setText('sqm', s.sqm ?? '--');
+    setText('score', s.observation?.score ?? '--');
+    setText('scoreLabel', s.observation?.label || '監視中');
+    if(s.bme280?.ok){
+      setText('temp', s.bme280.temperature + '℃');
+      setText('hum', s.bme280.humidity + '%');
+      setText('press', s.bme280.pressure + 'hPa');
+    } else {
+      setText('temp', '準備中'); setText('hum', '準備中'); setText('press', '準備中');
+    }
+    setText('rain', s.rain?.label || s.rain?.message || '未設定');
+    const cap = document.getElementById('captures');
+    cap.innerHTML = (s.captures||[]).map(x=>`<a href="/images/${x}" target="_blank">${x}</a>`).join('') || 'まだありません';
+    const vid = document.getElementById('videos');
+    vid.innerHTML = (s.videos||[]).map(x=>`<a href="/videos/${x}" target="_blank">${x}</a>`).join('') || 'まだありません';
+  }catch(e){ msg('状態取得エラー: '+e); }
+}
+async function captureNow(){
+  msg('撮影中...');
+  const r = await jsonFetch('/capture', {method:'POST'});
+  msg(r.ok ? '保存しました: '+r.file : '失敗: '+r.message);
+  await updateStatus();
+}
+async function makeVideo(){
+  msg('MP4作成中...');
+  const r = await jsonFetch('/video', {method:'POST'});
+  msg(r.ok ? '動画を作成しました: '+r.file : '失敗: '+r.message);
+  await updateStatus();
+}
+async function runUpdate(){
+  if(!confirm('GitHubから最新版に更新しますか？')) return;
+  const r = await jsonFetch('/update', {method:'POST'});
+  msg(r.message || '更新を開始しました');
+}
+function reloadImage(){ updateStatus(); }
+function fullscreenSky(){
+  const el = document.getElementById('skybox');
+  if(el.requestFullscreen) el.requestFullscreen();
+}
+updateStatus();
+setInterval(updateStatus, 3000);
