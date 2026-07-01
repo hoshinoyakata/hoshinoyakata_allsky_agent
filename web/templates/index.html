@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>星の館 全天カメラ AIエージェント</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <div class="eyebrow">HOSHINOYAKATA AI OBSERVATORY</div>
+      <h1>星の館 全天カメラ AIエージェント</h1>
+    </div>
+    <div class="status-pill" id="condition">起動中</div>
+  </header>
+
+  <main class="grid">
+    <section class="sky-card">
+      <div class="sky-head">
+        <span>📺 ライブ全天映像</span><span id="time">--</span>
+      </div>
+      <div class="sky-wrap">
+        <img id="sky" src="/image/latest.jpg" alt="全天カメラ">
+        <div class="label north">北</div><div class="label east">東</div><div class="label west">西</div><div class="label south">南</div>
+        <div class="event-badge">🟢 AI監視中</div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <h2>操作</h2>
+      <button onclick="capture()">📸 ワンクリック撮影</button>
+      <button onclick="record()">🎥 MP4録画</button>
+      <button onclick="toggleFullscreen()">⛶ 全画面</button>
+      <button onclick="location.reload()">🔄 更新</button>
+      <h2>観測データ</h2>
+      <div class="metric"><span>🌡 気温</span><b id="temp">--</b></div>
+      <div class="metric"><span>💧 湿度</span><b id="hum">--</b></div>
+      <div class="metric"><span>🧭 気圧</span><b id="press">--</b></div>
+      <div class="metric"><span>☁ 雲量</span><b id="cloud">--</b></div>
+      <div class="metric"><span>🌙 月齢</span><b id="moon">--</b></div>
+      <div class="metric"><span>⭐ SQM</span><b id="sqm">未接続</b></div>
+    </aside>
+
+    <section class="panel wide">
+      <h2>AIイベント</h2>
+      <div class="events">
+        <div>🌠 流星検出：準備中</div>
+        <div>☄ 火球検出：準備中</div>
+        <div>🛰 ISS・人工衛星：次版対応</div>
+        <div>🌐 ホームページ更新：次版対応</div>
+        <div>📱 Instagram投稿：次版対応</div>
+      </div>
+    </section>
+
+    <section class="panel wide">
+      <h2>最新画像</h2>
+      <div id="gallery" class="gallery"></div>
+    </section>
+  </main>
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>

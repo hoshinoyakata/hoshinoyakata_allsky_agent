@@ -1,0 +1,19 @@
+{
+  "site_name": "星の館 全天カメラ AIエージェント",
+  "camera": {
+    "image_width": 1920,
+    "image_height": 1080,
+    "preview_width": 1280,
+    "preview_height": 720,
+    "capture_command": "rpicam-still",
+    "video_command": "rpicam-vid"
+  },
+  "sensor": {
+    "bme280_enabled": true,
+    "i2c_address": "0x76"
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "port": 5000
+  }
+}
