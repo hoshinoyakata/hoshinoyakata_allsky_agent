@@ -1,42 +1,19 @@
-# Hoshinoyakata AllSky AI Agent Ver.0.1
+# 星の館 AllSky AIエージェント Ver.0.2
 
-Raspberry Pi 5 + rpicam camera 用の全天カメラWebアプリです。
+写真撮影ボタンで `data/captures/` にJPEG保存します。
 
-## 最初のセットアップ
-
-```bash
-cd ~/hoshinoyakata_agent
-git pull
-chmod +x scripts/*.sh
-./scripts/install.sh
-./scripts/start.sh
-```
-
-ブラウザで開く：
-
-```text
-http://localhost:5000
-```
-
-別PCから：
-
-```text
-http://ラズパイのIP:5000
-```
-
-## 今できること
-
-- 全天ライブ画像のWeb表示
-- 真円表示のUI
-- ワンクリック撮影
-- 10秒録画テスト
-- GitHub経由更新の土台
-
-## 更新
+起動:
 
 ```bash
 cd ~/hoshinoyakata_agent
 git pull
-./scripts/install.sh
-./scripts/start.sh
+python3 -m venv venv --system-site-packages
+venv/bin/python3 -m pip install -r requirements.txt
+venv/bin/python3 app.py
+```
+
+ブラウザ:
+
+```text
+http://192.168.1.20:5000
 ```

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>星の館 全天カメラ AIエージェント</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <h1>🌌 星の館 全天カメラ AIエージェント</h1>
+  <p>Hoshinoyakata All-Sky AI Agent Ver.0.2</p>
+  <div class="status"><span>AI監視中</span><span>Raspberry Pi接続</span><span>システム正常</span></div>
+</header>
+<main>
+  <section class="panel viewer">
+    <h2>ライブビュー（全天）</h2>
+    <div class="sky-circle">
+      <img id="sky" src="{% if latest %}/captures/{{ latest }}{% else %}/static/noimage.svg{% endif %}" alt="全天画像">
+    </div>
+    <div class="buttons">
+      <button id="captureBtn">📸 写真を撮影</button>
+      <button id="refreshBtn">🔄 最新画像に更新</button>
+      <button id="fullBtn">⛶ 全画面表示</button>
+    </div>
+    <p id="message"></p>
+  </section>
+  <section class="panel side">
+    <h2>現在の状況</h2>
+    <div class="grid">
+      <div>🌡 気温<br><b>準備中</b></div>
+      <div>💧 湿度<br><b>準備中</b></div>
+      <div>☁ 雲量<br><b>準備中</b></div>
+      <div>🌙 月齢<br><b>準備中</b></div>
+    </div>
+    <h2>次に実装</h2>
+    <p>MP4録画、BME280、雲量計算、Instagram投稿、流星検出を順番に追加します。</p>
+  </section>
+</main>
+<script src="/static/app.js"></script>
+</body>
+</html>
