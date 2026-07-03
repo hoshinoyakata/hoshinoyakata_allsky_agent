@@ -1,17 +1,55 @@
 {
-  "version": "3.1 Night AI Ultimate",
+  "version": "3.2 Night AI Pro LED Ghost",
   "site_name": "星の館 全天カメラ AIエージェント",
   "camera": {
     "width": 3072,
     "height": 3072,
     "photo_timeout_ms_day": 1000,
-    "photo_timeout_ms_night": 2000,
+    "photo_timeout_ms_night": 2500,
     "video_time_ms": 10000,
     "refresh_seconds": 3,
     "night_mode": "auto",
-    "night_exposure_us": 1500000,
-    "night_gain": 24
+    "night_exposure_us": 1800000,
+    "night_gain": 20,
+    "night_awb": "auto"
   },
-  "bme280": {"enabled": true, "bus": "auto", "address": "auto"},
-  "schedule": {"regular_capture": "20:00"}
+  "display": {
+    "stage_scale": 0.9,
+    "image_scale": 0.9,
+    "fullscreen_stage_scale": 0.88,
+    "fullscreen_image_scale": 0.88
+  },
+  "night_processing": {
+    "enabled": true,
+    "led_ghost_reduction": true,
+    "green_cast_reduction": true,
+    "hot_pixel_reduction": true,
+    "contrast_boost": true,
+    "save_processed_copy": true
+  },
+  "cloud_ai": {
+    "enabled": true
+  },
+  "bme280": {
+    "enabled": true,
+    "bus": "auto",
+    "address": "auto"
+  },
+  "wind": {
+    "enabled": true,
+    "gpio_pin": 17,
+    "pulses_per_rotation": 3,
+    "cup_radius_m": 0.04,
+    "calibration_factor": 1.0
+  },
+  "rain": {
+    "enabled": false,
+    "gpio_pin": 27
+  },
+  "schedule": {
+    "regular_capture": "20:00",
+    "timelapse": "21:00",
+    "upload": "13:30",
+    "daily_report": "00:00"
+  }
 }
