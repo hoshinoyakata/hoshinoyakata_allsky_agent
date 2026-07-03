@@ -1,5 +1,5 @@
 {
-  "version": "4.1 Control Final",
+  "version": "4.2 Pressure Live Fix",
   "site_name": "星の館 全天カメラAIエージェント",
   "camera": {
     "width": 3072,
@@ -9,12 +9,15 @@
     "night_gain": 20,
     "photo_timeout_ms_day": 1000,
     "photo_timeout_ms_night": 2500,
-    "video_time_ms": 10000
+    "live_poll_seconds": 2
   },
   "bme280": {
     "enabled": true,
-    "bus": "auto",
-    "address": "auto"
+    "bus": 1,
+    "address": "auto",
+    "altitude_m": 108,
+    "pressure_unit_auto_fix": true,
+    "pressure_offset_hpa": 0.0
   },
   "wind": {
     "enabled": true,
