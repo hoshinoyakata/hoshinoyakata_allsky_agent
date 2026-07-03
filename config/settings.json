@@ -1,27 +1,17 @@
 {
-  "version": "3.0 Cloud AI",
+  "version": "3.1 Night AI Ultimate",
   "site_name": "星の館 全天カメラ AIエージェント",
   "camera": {
     "width": 3072,
     "height": 3072,
-    "photo_timeout_ms": 1000,
+    "photo_timeout_ms_day": 1000,
+    "photo_timeout_ms_night": 2000,
     "video_time_ms": 10000,
-    "refresh_seconds": 2
+    "refresh_seconds": 3,
+    "night_mode": "auto",
+    "night_exposure_us": 1500000,
+    "night_gain": 24
   },
-  "bme280": {
-    "enabled": true,
-    "bus": "auto",
-    "address": "auto"
-  },
-  "wind": {
-    "enabled": true,
-    "gpio_pin": 17,
-    "pulses_per_rotation": 3,
-    "cup_radius_m": 0.04,
-    "calibration_factor": 1.0
-  },
-  "rain": {
-    "enabled": false,
-    "gpio_pin": 27
-  }
+  "bme280": {"enabled": true, "bus": "auto", "address": "auto"},
+  "schedule": {"regular_capture": "20:00"}
 }

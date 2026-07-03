@@ -9,5 +9,6 @@ sudo cp systemd/hoshinoyakata-allsky.service /etc/systemd/system/hoshinoyakata-a
 sudo systemctl daemon-reload
 sudo systemctl enable hoshinoyakata-allsky
 sudo systemctl restart hoshinoyakata-allsky
+echo ""
 echo "インストール完了"
 echo "ブラウザで開く： http://$(hostname -I | awk '{print $1}'):5000"
