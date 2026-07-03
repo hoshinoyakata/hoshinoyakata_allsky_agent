@@ -1,18 +1,13 @@
-# 星の館 AllSky AIエージェント Ver.1.2-dev
+# 星の館 全天カメラ AIエージェント v1.3
 
-## 追加機能
-- 観望指数（雲量・雨・湿度・月齢から簡易判定）
-- 雨センサー表示枠
-- BME280実機読み取り準備
-- MP4タイムラプス作成
-- GitHub更新ボタン
-- systemd自動起動対応
+- 楕円ガイド二重表示を防止
+- ライブ映像黒画面時の復旧ボタン
+- BME280 0x76対応
+- センサー未接続でも停止しない
 
-## 更新方法
-Windowsでこのフォルダの中身をGitHubフォルダへ上書きして、GitHub DesktopでCommit → Pushしてください。
-ラズパイ側は5分以内に自動更新されます。
-
-## 起動確認
+## 起動
 ```bash
-sudo systemctl status hoshinoyakata-allsky
+cd ~/hoshinoyakata_allsky_agent
+source venv/bin/activate
+python web/app.py
 ```

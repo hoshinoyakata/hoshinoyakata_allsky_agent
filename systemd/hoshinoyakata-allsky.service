@@ -1,15 +1,13 @@
 [Unit]
-Description=Hoshinoyakata AllSky AI Agent
-After=network-online.target
-Wants=network-online.target
+Description=Hoshinoyakata Allsky AI Agent
+After=network.target
 
 [Service]
-Type=simple
-User=pi
-WorkingDirectory=/home/pi/hoshinoyakata_agent
-ExecStart=/home/pi/hoshinoyakata_agent/venv/bin/python3 /home/pi/hoshinoyakata_agent/app.py
+WorkingDirectory=/home/pi/hoshinoyakata_allsky_agent
+ExecStart=/home/pi/hoshinoyakata_allsky_agent/venv/bin/python /home/pi/hoshinoyakata_allsky_agent/web/app.py
 Restart=always
 RestartSec=5
+User=pi
 
 [Install]
 WantedBy=multi-user.target
