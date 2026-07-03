@@ -1,5 +1,5 @@
 {
-  "version": "3.6 Wide 1920 UI",
+  "version": "4.0 Remote Control",
   "site_name": "星の館 全天カメラAIエージェント",
   "camera": {
     "width": 3072,
@@ -9,7 +9,9 @@
     "night_gain": 20,
     "photo_timeout_ms_day": 1000,
     "photo_timeout_ms_night": 2500,
-    "video_time_ms": 10000
+    "video_time_ms": 10000,
+    "live_enabled": true,
+    "ai_enabled": true
   },
   "bme280": {
     "enabled": true,
@@ -28,5 +30,8 @@
     "enabled": false,
     "gpio_pin": 27,
     "active_low": true
+  },
+  "ui": {
+    "wide_1920": true
   }
 }

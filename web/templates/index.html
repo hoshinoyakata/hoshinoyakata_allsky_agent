@@ -4,7 +4,7 @@
 <body>
 <header class="topbar">
   <div class="brand"><div class="logo">🪐</div><div><h1>{{ site_name }}</h1><p>Hoshinoyakata All-Sky AI Agent</p></div></div>
-  <div class="version"><b>Ver.{{ version }}</b><span>Professional Edition</span></div>
+  <div class="version"><b>Ver.{{ version }}</b><span>Remote Control Edition</span></div>
   <div class="clock"><b id="timeText">--:--:--</b><span id="dateText">----</span></div>
   <div class="healthy">● システム正常</div>
 </header>
@@ -12,15 +12,15 @@
 <main class="dashboard">
   <section class="panel leftPanel">
     <div class="box liveInfo">
-      <h2>ライブビュー（全天）</h2><div class="liveBadge">● LIVE</div>
-      <dl class="spec"><dt>FPS</dt><dd>15.2</dd><dt>ビットレート</dt><dd>2.4 Mbps</dd><dt>解像度</dt><dd>3072×3072</dd><dt>露出時間</dt><dd id="exposureLabel">--</dd><dt>ゲイン</dt><dd id="gainLabel">--</dd><dt>温度</dt><dd>34.6 ℃</dd><dt>コントラスト</dt><dd>1.20</dd><dt>シャープネス</dt><dd>20</dd></dl>
+      <h2>ライブビュー（全天）</h2><div id="liveBadge" class="liveBadge live-on">● LIVE</div>
+      <dl class="spec"><dt>FPS</dt><dd>15.2</dd><dt>ビットレート</dt><dd>2.4 Mbps</dd><dt>解像度</dt><dd>3072×3072</dd><dt>露出時間</dt><dd id="exposureLabel">--</dd><dt>ゲイン</dt><dd id="gainLabel">--</dd><dt>状態</dt><dd id="cameraState">LIVE</dd><dt>コントラスト</dt><dd>1.20</dd></dl>
     </div>
     <div class="box ops"><h2>カメラ操作</h2>
       <button onclick="capture()">📷 ワンクリック撮影</button>
-      <button class="red" onclick="recordVideo()">📹 MP4録画開始</button>
-      <button class="purple">⦿ タイムラプス</button>
-      <button class="green" onclick="toggleFullscreen()">⛶ 全天画像保存</button>
-      <button class="slate">⚙ 設定</button>
+      <button class="red" onclick="recordStart()">🔴 MP4録画開始</button>
+      <button class="slate" onclick="recordStop()">⏹ 録画停止</button>
+      <button class="green" onclick="toggleFullscreen()">⛶ 全画面表示</button>
+      <button class="slate" onclick="control('camera_restart')">↻ カメラ再起動</button>
     </div>
     <div class="box modeBox"><h2>星空モード（感度）</h2><div class="modeBtns">
       <button onclick="setNightMode('auto')">AUTO</button><button onclick="setNightMode('low')">LOW</button><button onclick="setNightMode('medium')">MID</button><button onclick="setNightMode('high')">HIGH</button><button onclick="setNightMode('extreme')">EXTREME</button>
@@ -70,7 +70,9 @@
   </section>
 
   <section class="panel capturesPanel"><h2>直近キャプチャ</h2><div id="thumbs" class="thumbs"></div></section>
-  <section class="panel quickPanel"><h2>クイック操作</h2><div class="quickGrid"><button class="slate">☰ ログ表示</button><button class="slate">画面一覧</button><button>最新一覧</button><button class="orange">システム再起動</button><button class="red">シャットダウン</button></div><div class="nextTime">20:00<br><small>定時自動撮影まで<br>（10分間隔）</small></div></section>
+  <section class="panel quickPanel"><h2>遠隔操作パネル</h2><div class="quickGrid">
+    <button onclick="control('live_on')">▶ LIVE開始</button><button class="slate" onclick="control('live_off')">⏸ LIVE停止</button><button onclick="control('ai_on')">🤖 AI ON</button><button class="slate" onclick="control('ai_off')">AI OFF</button><button class="orange" onclick="control('system_restart')">システム再起動</button><button class="red">シャットダウン</button>
+  </div><div class="nextTime">20:00<br><small>定時自動撮影まで<br>（10分間隔）</small></div></section>
 
   <section class="panel systemPanel"><h2>システム情報</h2><div class="sysGrid">
     <div>CPU温度 <i style="--w:63%"></i><b>43.2℃</b></div><div>メモリ使用率 <i style="--w:28%"></i><b>28%</b></div><div>ディスク使用率 <i style="--w:37%"></i><b>37%</b></div><div>システム稼働時間 <b id="uptime">--</b></div><div>IPアドレス <b id="ip">--</b></div><div>バージョン <b>Ver.{{ version }}</b></div>
