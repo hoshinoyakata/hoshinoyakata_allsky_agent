@@ -1,1 +1,40 @@
-let latest=null;function t(id,x){document.getElementById(id).textContent=x}async function loadStatus(){try{const s=await (await fetch('/api/status?ts='+Date.now())).json();if(s.latest_image&&s.latest_image!==latest){latest=s.latest_image;refreshImage()}if(s.bme280&&s.bme280.ok){t('temp',s.bme280.temperature+'℃');t('hum',s.bme280.humidity+'%');t('press',s.bme280.pressure+' hPa');t('sensorMsg','BME280 '+s.bme280.address+' 正常')}else{t('temp','未読込');t('hum','未読込');t('press','未読込');t('sensorMsg',s.bme280?.message||'BME280未接続')}t('cloud',s.cloud+'%');t('moon',s.moon_age);t('sqm',s.sqm);t('wind',s.wind_mps+' m/s')}catch(e){t('sensorMsg','状態取得エラー: '+e)}}function refreshImage(){if(!latest)return;const img=document.getElementById('sky'),viewer=document.querySelector('.viewer'),src='/images/'+latest+'?ts='+Date.now();img.onload=()=>{img.style.display='block';viewer.classList.add('has-image');document.getElementById('savedImage').innerHTML='<img src="'+src+'">'};img.onerror=()=>{viewer.classList.remove('has-image');document.getElementById('empty').textContent='画像読込失敗'};img.src=src}async function capture(){t('message','撮影中...');const j=await (await fetch('/api/capture',{method:'POST'})).json();if(j.ok){latest=j.filename;t('message','保存しました: '+j.filename);refreshImage()}else t('message','撮影失敗: '+j.message)}function toggleFullscreen(){const el=document.querySelector('.viewer');if(!document.fullscreenElement)el.requestFullscreen?.();else document.exitFullscreen?.()}loadStatus();setInterval(loadStatus,10000);
+let latestImage=null;
+function $(id){return document.getElementById(id)}
+function text(id,value){const el=$(id);if(el)el.textContent=value}
+async function loadStatus(){
+  try{
+    const r=await fetch('/api/status?ts='+Date.now());
+    const s=await r.json();
+    if(s.latest_image&&s.latest_image!==latestImage){latestImage=s.latest_image;refreshImage()}
+    if(s.bme280&&s.bme280.ok){
+      text('temp',`${s.bme280.temperature}℃`);
+      text('hum',`${s.bme280.humidity}%`);
+      text('press',`${s.bme280.pressure} hPa`);
+      text('sensorMsg',`BME280 ${s.bme280.address} 正常`);
+    }else{
+      text('temp','未読込');text('hum','未読込');text('press','未読込');
+      text('sensorMsg',s.bme280?.message||'BME280未接続');
+    }
+    text('cloud',`${s.cloud}%`);text('moon',s.moon_age);text('sqm',s.sqm);text('wind',`${s.wind?.wind_mps??'--'} m/s`);
+  }catch(e){text('sensorMsg','状態取得エラー')}
+}
+function refreshImage(){
+  if(!latestImage)return;
+  const img=$('sky'),viewer=$('viewer'),src=`/images/${latestImage}?ts=${Date.now()}`;
+  img.onload=()=>{img.style.display='block';viewer.classList.add('has-image');$('savedImage').innerHTML=`<img src="${src}" alt="保存画像">`};
+  img.onerror=()=>{img.style.display='none';viewer.classList.remove('has-image');$('empty').textContent='画像読込失敗'};
+  img.src=src;
+}
+async function capture(){
+  text('message','撮影中...');
+  const r=await fetch('/api/capture',{method:'POST'});const j=await r.json();
+  if(j.ok){latestImage=j.filename;text('message',j.message||`保存しました: ${j.filename}`);refreshImage()}
+  else{text('message','撮影失敗: '+j.message)}
+}
+async function recordVideo(){
+  text('message','動画撮影中...');
+  const r=await fetch('/api/video',{method:'POST'});const j=await r.json();
+  text('message',j.message||(j.ok?'動画保存しました':'動画失敗'));
+}
+function toggleFullscreen(){const el=$('viewer');if(!document.fullscreenElement){el.requestFullscreen?.()}else{document.exitFullscreen?.()}}
+loadStatus();setInterval(loadStatus,10000);

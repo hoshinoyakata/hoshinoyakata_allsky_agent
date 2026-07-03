@@ -3,8 +3,8 @@ Description=Hoshinoyakata Allsky AI Agent
 After=network.target
 
 [Service]
-WorkingDirectory=/home/pi/hoshinoyakata_allsky_agent
-ExecStart=/home/pi/hoshinoyakata_allsky_agent/venv/bin/python /home/pi/hoshinoyakata_allsky_agent/web/app.py
+WorkingDirectory=/home/pi/hoshinoyakata_allsky_agent_real_v2
+ExecStart=/home/pi/hoshinoyakata_allsky_agent_real_v2/venv/bin/python /home/pi/hoshinoyakata_allsky_agent_real_v2/web/app.py
 Restart=always
 RestartSec=5
 User=pi
