@@ -83,8 +83,6 @@ def sysinfo():
     except Exception: st="--"
     up=run("uptime -p",5).stdout.strip().replace("up ","")
     return {"device":"Raspberry Pi 5","os":platform.platform(),"ip":ip,"storage":st,"uptime":up}
-def hist():
-    return {"temp":[21.8,21.2,20.5,19.8,20.4,21.5],"hum":[64,66,70,73,71,69.8],"press":[713,713,712,711,712,712.9],"wind":[0,0.3,0,0.8,0.1,0],"sqm":[20.8,20.9,21,20.9,20.8,20.8],"cloud":[33,30,42,50,41,33]}
 @app.route("/")
 def index():
     s=cfg(); return render_template("index.html",site_name=s["site_name"],version=s["version"])
@@ -97,7 +95,7 @@ def status():
     "wind":{"ok":True,"avg_mps":0.0,"wind_mps":0.0,"max_today":0.0},
     "rain":{"ok":True,"raining":False,"label":"晴れ","message":"降水なし"},
     "camera":{"rpicam_still":has("rpicam-still"),"rpicam_vid":has("rpicam-vid"),"status":"正常動作中"},
-    "history":hist(),"logs":logs(),"system":sysinfo(),"schedule":s.get("schedule",{})})
+    "logs":logs(),"system":sysinfo(),"schedule":s.get("schedule",{})})
 @app.route("/api/capture",methods=["POST"])
 def capture():
     name=f"allsky_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"; out=IMG/name; cmd=cam_still(out)

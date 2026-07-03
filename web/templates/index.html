@@ -1,8 +1,35 @@
 <!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ site_name }}</title><link rel="stylesheet" href="/static/style.css"></head><body>
-<header class="topbar"><div class="brand"><div class="logo">🌌</div><div><h1>{{ site_name }} <span>Ver {{ version }}</span></h1><p>Hoshinoyakata AllSky AI Agent</p></div></div><nav><button class="active">📷<br>ライブ</button><button>🖼<br>ギャラリー</button><button>📈<br>グラフ</button><button>⚙<br>設定</button></nav><div class="clock"><div id="dateText">--</div><b id="timeText">--</b><small>JST</small></div></header>
-<main class="grid">
-<section class="panel live"><div class="head"><h2>全天ライブビュー（All Sky Live）</h2><span class="live-dot">● LIVE</span></div><div id="viewer" class="viewer show-guide show-dir"><img id="sky"><div id="empty">画像待機中</div><div class="ring"></div><div class="ring2"></div><div class="cross v"></div><div class="cross h"></div><div class="inner"></div><div class="dir n">N</div><div class="dir e">E</div><div class="dir s">S</div><div class="dir w">W</div><button class="full" onclick="toggleFullscreen()">⛶</button></div><div class="controls"><label>更新間隔<select id="refreshSelect" onchange="changeRefresh()"><option value="1">1秒</option><option value="2" selected>2秒</option><option value="5">5秒</option><option value="10">10秒</option></select></label><button onclick="capture()">📷 ワンクリック撮影</button><button onclick="recordVideo()">🎥 MP4録画開始</button><button onclick="loadStatus(true)">🔄 最新画像に更新</button><button onclick="toggleGuide()">⭕ ガイドON/OFF</button><button onclick="toggleDirection()">🧭 方位線ON/OFF</button><button onclick="toggleFullscreen()">⛶ 全画面表示</button></div><p id="message"></p><div class="summary"><div><span>🌡 気温</span><b id="miniTemp">--</b></div><div><span>💧 湿度</span><b id="miniHum">--</b></div><div><span>気圧</span><b id="miniPress">--</b></div><div><span>🌬 風速</span><b id="miniWind">--</b></div><div><span>☔ 雨</span><b id="miniRain">--</b></div><div><span>⭐ SQM</span><b id="miniSqm">--</b></div><div><span>☁ AI雲量</span><b id="miniCloud">--</b></div></div></section>
-<section class="panel status"><div class="head"><h2>現在の状態</h2><span id="statusUpdated">--</span></div><div class="cards"><div><span>🌡 気温</span><b id="temp">未読込</b><small id="feel">--</small></div><div><span>💧 湿度</span><b id="hum">未読込</b></div><div><span>気圧</span><b id="press">未読込</b></div><div><span>☁ AI雲量</span><b id="cloud">--</b><small id="cloudLabel">--</small></div><div><span>🌙 月齢</span><b id="moon">--</b></div><div><span>⭐ SQM</span><b id="sqm">--</b></div><div><span>🌬 風速</span><b id="wind">--</b><small id="windSub">--</small></div><div><span>🧭 風向</span><b>北北西</b><small>338°</small></div><div><span>🌧 雨センサー</span><b id="rain">--</b><small id="rainMsg">--</small></div><div><span>📷 カメラ</span><b id="cameraStatus">--</b><small id="cameraInfo">--</small></div><div><span>🦋 センサー</span><b id="sensorStatus">--</b><small id="sensorMsg">--</small></div><div><span>🖥 システム</span><b>正常</b><small id="sysSmall">--</small></div></div><h2>気象データグラフ（過去24時間）</h2><div class="charts"><canvas id="chartTemp"></canvas><canvas id="chartHum"></canvas><canvas id="chartPress"></canvas><canvas id="chartWind"></canvas><canvas id="chartSqm"></canvas><canvas id="chartCloud"></canvas></div></section>
-<aside class="side"><section class="panel"><h2>お知らせ・アラート</h2><p>✅ システム：すべて正常です</p><p>🌠 定時撮影：20:00</p><p>☁ 次回アップロード：13:30</p></section><section class="panel"><h2>クイックリンク</h2><button>📁 保存画像一覧</button><button>🎞 保存動画一覧</button><button>📈 データグラフ</button><button>📸 Instagram連携</button><button>🏠 ホームページを開く</button></section></aside>
-<section class="panel"><h2>システムログ</h2><div id="logs"></div></section><section class="panel"><h2>今後の予定</h2><div id="scheduleList"></div></section><section class="panel"><h2>システム情報</h2><div id="systemInfo"></div></section>
-</main><footer>© 2026 星の館 AllSky AI Agent Ver 2.3 Professional</footer><script src="/static/app.js"></script></body></html>
+<header><h1>🌌 {{ site_name }} <span>Ver.{{ version }}</span></h1><p>Hoshinoyakata All-Sky AI Agent</p></header>
+<main class="layout">
+<section class="panel main">
+<h2>ライブビュー（全天）</h2>
+<div id="viewer" class="viewer show-guide show-dir">
+<img id="sky"><div id="empty">画像待機中</div>
+<div class="guide outer"></div><div class="guide horizon"></div><div class="cross v"></div><div class="cross h"></div>
+<div class="dir n">N</div><div class="dir e">E</div><div class="dir s">S</div><div class="dir w">W</div>
+</div>
+<div class="buttons">
+<button onclick="capture()">📷 写真を撮影</button>
+<button onclick="recordVideo()">🎥 MP4録画</button>
+<button onclick="loadStatus(true)">🔄 最新画像に更新</button>
+<button onclick="toggleGuide()">⭕ ガイドON/OFF</button>
+<button onclick="toggleFullscreen()">⛶ 全画面表示</button>
+</div>
+<p id="message"></p>
+</section>
+<section class="panel side"><h2>現在の状態</h2>
+<div class="card"><span>🌡 温度</span><b id="temp">未読込</b></div>
+<div class="card"><span>💧 湿度</span><b id="hum">未読込</b></div>
+<div class="card"><span>気圧</span><b id="press">未読込</b></div>
+<div class="card"><span>☁ AI雲量</span><b id="cloud">--</b></div>
+<div class="card"><span>🌙 月齢</span><b id="moon">--</b></div>
+<div class="card"><span>⭐ SQM</span><b id="sqm">--</b></div>
+<div class="card"><span>🌬 風速</span><b id="wind">--</b></div>
+<div class="sensor" id="sensorMsg">--</div>
+</section>
+</main>
+<section class="bottom">
+<div class="panel"><h2>ログ</h2><div id="logs"></div></div>
+<div class="panel"><h2>システム情報</h2><div id="systemInfo"></div></div>
+</section>
+<script src="/static/app.js"></script></body></html>
