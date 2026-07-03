@@ -1,37 +1,15 @@
 {
-  "version": "3.3 UI Weather Fix",
+  "version": "3.4 Balanced UI Fix",
   "site_name": "星の館 全天カメラ AIエージェント",
   "camera": {
     "width": 3072,
     "height": 3072,
-    "photo_timeout_ms_day": 1000,
-    "photo_timeout_ms_night": 2500,
-    "video_time_ms": 10000,
-    "refresh_seconds": 3,
     "night_mode": "auto",
     "night_exposure_us": 1800000,
     "night_gain": 20,
-    "night_awb": "auto"
-  },
-  "display": {
-    "stage_scale": 0.9,
-    "image_scale": 0.9,
-    "fullscreen_stage_scale": 0.88,
-    "fullscreen_image_scale": 0.88
-  },
-  "night_processing": {
-    "enabled": true,
-    "led_ghost_reduction": true,
-    "green_cast_reduction": true,
-    "hot_pixel_reduction": true,
-    "contrast_boost": true,
-    "save_processed_copy": true
-  },
-  "cloud_ai": {
-    "enabled": true,
-    "night_cloud_by_stars": true,
-    "cloud_floor_when_no_stars": 75,
-    "star_threshold": 170
+    "photo_timeout_ms_day": 1000,
+    "photo_timeout_ms_night": 2500,
+    "video_time_ms": 10000
   },
   "bme280": {
     "enabled": true,
@@ -50,11 +28,5 @@
     "enabled": false,
     "gpio_pin": 27,
     "active_low": true
-  },
-  "schedule": {
-    "regular_capture": "20:00",
-    "timelapse": "21:00",
-    "upload": "13:30",
-    "daily_report": "00:00"
   }
 }
