@@ -1,5 +1,5 @@
 {
-  "version": "2.9 Fullscreen Center Fit",
+  "version": "3.0 Cloud AI",
   "site_name": "星の館 全天カメラ AIエージェント",
   "camera": {
     "width": 3072,
@@ -7,12 +7,6 @@
     "photo_timeout_ms": 1000,
     "video_time_ms": 10000,
     "refresh_seconds": 2
-  },
-  "display": {
-    "stage_scale": 0.9,
-    "image_scale": 0.9,
-    "fullscreen_stage_scale": 0.88,
-    "fullscreen_image_scale": 0.88
   },
   "bme280": {
     "enabled": true,
@@ -29,11 +23,5 @@
   "rain": {
     "enabled": false,
     "gpio_pin": 27
-  },
-  "schedule": {
-    "regular_capture": "20:00",
-    "timelapse": "21:00",
-    "upload": "13:30",
-    "daily_report": "00:00"
   }
 }
