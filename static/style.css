@@ -1,9 +1,47 @@
-:root{--bg:#07111f;--panel:#101d35;--line:#1d3a64;--text:#e9f5ff;--muted:#86a4c8;--blue:#00b7ff;--green:#28e777;--yellow:#ffd24a}
-*{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at top,#122549,#07111f 60%);color:var(--text);font-family:system-ui,-apple-system,'Segoe UI',sans-serif}
-header{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:18px 24px;border-bottom:1px solid var(--line)}
-h1{margin:0;font-size:26px} h1 span{color:var(--yellow);font-size:18px} #subtitle{margin:6px 0 0;color:var(--muted)}
-button{background:#1078ff;color:white;border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;box-shadow:0 0 16px rgba(0,183,255,.15)} button:hover{filter:brightness(1.15)}
-.top-actions{display:flex;gap:8px;flex-wrap:wrap} main{display:grid;grid-template-columns:minmax(420px,1.8fr) minmax(280px,.8fr);gap:18px;padding:18px;align-items:start}
-.panel{background:rgba(16,29,53,.92);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
-h2{margin:0 0 14px;color:#dff7ff}.sky-panel{min-height:560px}.sky-panel img{display:block;max-width:100%;max-height:70vh;margin:auto;border-radius:50%;border:5px solid var(--blue);background:#02070d;object-fit:contain}.buttons{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}#message{text-align:center;color:var(--yellow);margin-top:12px;min-height:24px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.mini{border:1px solid var(--line);border-radius:12px;padding:10px;background:#0b172b}.mini span{display:block;color:var(--muted);font-size:13px}.mini b{font-size:16px;color:#7df9ff}.big-metric{font-size:18px;margin-top:18px}.big-metric strong{display:block;font-size:46px;color:var(--yellow);line-height:1.05}.big-metric.cloud strong{color:var(--green)}.big-metric small{color:var(--muted);margin-left:8px}.scorebox{margin-top:18px;padding:14px;border-radius:14px;background:#08152a;border:1px solid var(--line)}.scorebox span{display:block;color:var(--muted)}.scorebox strong{font-size:52px;color:var(--green)}.scorebox em{display:block;color:var(--yellow);font-style:normal}.links{display:flex;flex-direction:column;gap:6px;max-height:240px;overflow:auto}.links a{color:#92ddff;text-decoration:none;border-bottom:1px solid rgba(146,221,255,.15);padding:5px 0}.list-panel{min-height:120px}
-@media(max-width:900px){main{grid-template-columns:1fr}header{display:block}.top-actions{margin-top:12px}.grid3{grid-template-columns:repeat(2,1fr)}}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: #111827; color: #e5e7eb; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.page { max-width: 1180px; margin: 0 auto; padding: 22px; }
+h1 { font-size: 28px; margin: 0 0 18px; }
+h2 { font-size: 22px; margin: 0 0 14px; }
+.card { background: #1f2937; border: 1px solid #374151; border-radius: 18px; padding: 18px; margin-bottom: 22px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+
+/* ここが楕円防止の本体。表示枠を必ず正方形にする */
+.viewer {
+  width: min(86vw, 78vh, 900px);
+  height: min(86vw, 78vh, 900px);
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  display: grid;
+  place-items: center;
+  background: #020617;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* 画像を引き伸ばさず、正方形内に収める */
+.live-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  aspect-ratio: 1 / 1;
+  display: block;
+}
+
+.viewer:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  border-radius: 0;
+}
+.viewer:fullscreen .live-img {
+  width: min(100vw, 100vh);
+  height: min(100vw, 100vh);
+  object-fit: contain;
+}
+
+.buttons { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 16px; }
+button { border: 0; border-radius: 10px; background: #0ea5e9; color: white; padding: 10px 14px; font-size: 15px; cursor: pointer; }
+button:hover { background: #0284c7; }
+.message { text-align: center; color: #fde68a; min-height: 1.5em; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.gallery img { width: 100%; aspect-ratio: 1 / 1; object-fit: contain; background: #020617; border-radius: 10px; }

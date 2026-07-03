@@ -3,62 +3,60 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>星の館 全天カメラ AIエージェント</title>
+  <title>星の館 全天カメラ v0.2</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<header>
-  <div>
-    <h1>🌌 星の館 全天カメラ AIエージェント <span>Ver.{{ version }}</span></h1>
-    <p id="subtitle">Hoshinoyakata All-Sky AI Agent</p>
-  </div>
-  <div class="top-actions">
-    <button onclick="captureNow()">📷 写真を撮影</button>
-    <button onclick="makeVideo()">🎥 MP4作成</button>
-    <button onclick="runUpdate()">🔄 GitHub更新</button>
-  </div>
-</header>
+  <main class="page">
+    <h1>ライブビュー（全天）</h1>
 
-<main>
-  <section class="panel sky-panel">
-    <h2>ライブビュー（全天）</h2>
-    <div id="skybox"><img id="sky" src="/static/noimage.svg" alt="latest allsky"></div>
-    <div class="buttons">
-      <button onclick="captureNow()">📷 写真を撮影</button>
-      <button onclick="reloadImage()">🔁 最新画像に更新</button>
-      <button onclick="fullscreenSky()">⛶ 全画面表示</button>
-    </div>
-    <div id="message"></div>
-  </section>
+    <section class="card">
+      <div id="viewer" class="viewer">
+        <img id="liveImage" class="live-img" src="/video_feed" alt="全天カメラ ライブ映像">
+      </div>
 
-  <aside class="panel status-panel">
-    <h2>現在の状況</h2>
-    <div class="grid3">
-      <div class="mini"><span>🌡 温度</span><b id="temp">準備中</b></div>
-      <div class="mini"><span>💧 湿度</span><b id="hum">準備中</b></div>
-      <div class="mini"><span>🌬 気圧</span><b id="press">準備中</b></div>
-      <div class="mini"><span>☔ 雨</span><b id="rain">未設定</b></div>
-      <div class="mini"><span>🖥 更新</span><b id="version">-</b></div>
-      <div class="mini"><span>⏱ 時刻</span><b id="now">-</b></div>
-    </div>
+      <div class="buttons">
+        <button onclick="captureImage()">📷 写真を撮影</button>
+        <button onclick="location.reload()">🔄 最新画像に更新</button>
+        <button onclick="enterFullscreen()">⛶ 全画面表示</button>
+        <button onclick="exitFullscreen()">↩ 全画面解除</button>
+      </div>
 
-    <div class="big-metric cloud">☁ AI雲量 <strong id="cloud">--%</strong></div>
-    <div class="big-metric">🌙 月齢 <strong id="moon">--</strong><small id="moonLabel"></small></div>
-    <div class="big-metric">⭐ SQM <strong id="sqm">--</strong></div>
-    <div class="scorebox"><span>🔭 観望指数</span><strong id="score">--</strong><em id="scoreLabel">監視中</em></div>
-  </aside>
+      <p id="message" class="message"></p>
+    </section>
 
-  <section class="panel list-panel">
-    <h2>保存画像</h2>
-    <div id="captures" class="links"></div>
-  </section>
+    <section class="card">
+      <h2>保存画像</h2>
+      <div id="gallery" class="gallery">
+        {% for file in files %}
+          <a href="/captures/{{ file }}" target="_blank">
+            <img src="/captures/{{ file }}" alt="{{ file }}">
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+  </main>
 
-  <section class="panel list-panel">
-    <h2>動画</h2>
-    <div id="videos" class="links">まだありません</div>
-  </section>
-</main>
+<script>
+async function captureImage(){
+  const res = await fetch('/capture');
+  const data = await res.json();
+  const msg = document.getElementById('message');
+  if(data.ok){
+    msg.textContent = '保存しました: ' + data.filename;
+  } else {
+    msg.textContent = '保存に失敗しました';
+  }
+}
 
-<script src="/static/app.js"></script>
+function enterFullscreen(){
+  const el = document.getElementById('viewer');
+  if (el.requestFullscreen) el.requestFullscreen();
+}
+
+function exitFullscreen(){
+  if (document.fullscreenElement) document.exitFullscreen();
+}
+</script>
 </body>
 </html>
