@@ -1,5 +1,5 @@
 {
-  "version": "2.6 Ultimate Fit",
+  "version": "2.7 Safe Fit",
   "site_name": "星の館 全天カメラ AIエージェント",
   "camera": {
     "width": 3072,
@@ -7,6 +7,10 @@
     "photo_timeout_ms": 1000,
     "video_time_ms": 10000,
     "refresh_seconds": 2
+  },
+  "display": {
+    "fisheye_scale": 0.86,
+    "guide_scale": 0.78
   },
   "bme280": {
     "enabled": true,

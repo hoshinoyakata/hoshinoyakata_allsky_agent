@@ -84,17 +84,14 @@ def read_bme280():
     bcfg = cfg().get("bme280", {})
     if not bcfg.get("enabled", True):
         return {"ok": False, "message": "BME280 disabled"}
-
     buses = [1, 10, 13, 14] if bcfg.get("bus", "auto") == "auto" else [int(bcfg["bus"])]
     addresses = [0x76, 0x77] if bcfg.get("address", "auto") == "auto" else [int(bcfg["address"], 16) if isinstance(bcfg["address"], str) else int(bcfg["address"])]
     debug = []
-
     try:
         from smbus2 import SMBus
         from bme280 import BME280
     except Exception as e:
         return {"ok": False, "message": "BME280ライブラリ読込失敗: " + str(e)}
-
     for bus_no in buses:
         visible = detect_i2c(bus_no)
         if visible:
@@ -108,7 +105,6 @@ def read_bme280():
                     sensor = BME280(i2c_dev=dev)
                     if hasattr(sensor, "i2c_addr"):
                         sensor.i2c_addr = addr
-
                 temp = round(float(sensor.get_temperature()), 1)
                 hum = round(float(sensor.get_humidity()), 1)
                 press = round(float(sensor.get_pressure()), 1)
@@ -116,15 +112,7 @@ def read_bme280():
                     dev.close()
                 except Exception:
                     pass
-                return {
-                    "ok": True,
-                    "bus": bus_no,
-                    "address": hex(addr),
-                    "temperature": temp,
-                    "humidity": hum,
-                    "pressure": press,
-                    "message": f"BME280 正常 bus{bus_no} {hex(addr)}"
-                }
+                return {"ok": True, "bus": bus_no, "address": hex(addr), "temperature": temp, "humidity": hum, "pressure": press, "message": f"BME280 正常 bus{bus_no} {hex(addr)}"}
             except Exception as e:
                 debug.append(f"bus {bus_no} addr {hex(addr)} NG: {str(e)[:80]}")
     return {"ok": False, "message": "BME280を読めません: " + " / ".join(debug[-8:])}
@@ -137,13 +125,7 @@ def system_info():
         storage = f"{round((disk.total-disk.free)/1024**3,1)}GB / {round(disk.total/1024**3,1)}GB"
     except Exception:
         storage = "--"
-    return {
-        "ip": ip,
-        "uptime": uptime,
-        "storage": storage,
-        "os": platform.platform(),
-        "camera": "正常" if has_cmd("rpicam-still") or has_cmd("libcamera-still") else "未確認"
-    }
+    return {"ip": ip, "uptime": uptime, "storage": storage, "os": platform.platform(), "camera": "正常" if has_cmd("rpicam-still") or has_cmd("libcamera-still") else "未確認"}
 
 @app.route("/")
 def index():
