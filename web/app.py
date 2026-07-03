@@ -13,11 +13,13 @@ def run(c,t=90): return subprocess.run(c,shell=True,text=True,capture_output=Tru
 def camtool(k): return "rpicam-"+k if has("rpicam-"+k) else ("libcamera-"+k if has("libcamera-"+k) else "")
 def night(): return datetime.now().hour>=18 or datetime.now().hour<=5
 def latest_img():
-    fs=sorted(IMG.glob("*.jpg"),key=lambda p:p.stat().st_mtime,reverse=True); return fs[0] if fs else None
+    fs=sorted(IMG.glob("*.jpg"),key=lambda p:p.stat().st_mtime,reverse=True)
+    return fs[0] if fs else None
 def recent(n=5):
     return [p.name for p in sorted(IMG.glob("*.jpg"),key=lambda p:p.stat().st_mtime,reverse=True)[:n]]
 def moon_age():
-    e=datetime(2000,1,6,18,14,tzinfo=timezone.utc); return round(((datetime.now(timezone.utc)-e).total_seconds()/86400)%29.53058867,1)
+    e=datetime(2000,1,6,18,14,tzinfo=timezone.utc)
+    return round(((datetime.now(timezone.utc)-e).total_seconds()/86400)%29.53058867,1)
 def still_cmd(out):
     s=cfg(); c=s["camera"]; tool=camtool("still")
     if not tool: return ""
@@ -114,7 +116,7 @@ def status():
 @app.route("/api/night_mode",methods=["POST"])
 def night_mode():
     mode=(request.get_json(force=True,silent=True) or {}).get("mode","auto")
-    s=cfg(); s["camera"]["night_mode"]=mode; save_cfg(s); return jsonify(ok=True,message=f"星空モード: {mode}")
+    s=cfg(); s["camera"]["night_mode"]=mode; save_cfg(s); return jsonify(ok=True,message=f"星空感度: {mode}")
 @app.route("/api/capture",methods=["POST"])
 def capture():
     out=IMG/f"allsky_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"; cmd=still_cmd(out)
@@ -122,8 +124,7 @@ def capture():
     r=run(cmd,120)
     return jsonify(ok=r.returncode==0 and out.exists(),filename=out.name,message="保存しました" if out.exists() else (r.stderr or "撮影失敗")[-800:])
 @app.route("/api/video",methods=["POST"])
-def video():
-    return jsonify(ok=True,message="動画機能は次版で調整")
+def video(): return jsonify(ok=True,message="動画機能は次版で調整")
 @app.route("/images/<path:n>")
 def images(n): return send_from_directory(IMG,n)
 @app.route("/videos/<path:n>")
