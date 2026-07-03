@@ -1,20 +1,20 @@
-# 星の館 全天カメラ AIエージェント Ver.2.3.1 Wide
+# 星の館 全天カメラ AIエージェント Ver.2.4 Final Design
 
-Ver2.3 Professional の見た目をさらに調整した版です。
+最終デザイン版です。
 
-## 改善点
-- 全天画像エリアをさらに大きく
-- 右側ステータス欄を細めに調整
-- 円が画面内に収まる `object-fit: contain` を維持
-- ライブ操作ボタンを下に固定しやすい配置へ調整
-- Ver表示を 2.3.1 Wide に更新
+## 内容
+- 全天円が画面内に必ず収まる大きめ中央レイアウト
+- 右側にBME280・天文情報・直近キャプチャ
+- 下部にシステム情報・AI検出ステータス・次回撮影・保存公開状況
+- N/E/S/W 方位表示
+- ワンクリック撮影・MP4録画・全画面・更新
+- BME280自動検出 bus 1/10/13/14、0x76/0x77
+- rpicam-still / rpicam-vid 対応
 
-## ラズパイで更新
+## ラズパイ更新
 ```bash
 cd ~/hoshinoyakata_allsky_agent_real_v2
 git pull
 bash scripts/install.sh
+sudo systemctl restart hoshinoyakata-allsky
 ```
-
-## ブラウザ
-http://192.168.1.20:5000

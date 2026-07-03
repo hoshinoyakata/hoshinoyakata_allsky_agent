@@ -1,5 +1,5 @@
 {
-  "version": "2.3.1 Wide",
+  "version": "2.4 Final Design",
   "site_name": "星の館 全天カメラ AIエージェント",
   "camera": {
     "width": 1920,
@@ -23,10 +23,6 @@
   "rain": {
     "enabled": false,
     "gpio_pin": 27
-  },
-  "display": {
-    "show_fisheye_guide": true,
-    "show_direction_guide": true
   },
   "schedule": {
     "regular_capture": "20:00",
