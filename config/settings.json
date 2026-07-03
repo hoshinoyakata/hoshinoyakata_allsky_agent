@@ -1,9 +1,9 @@
 {
-  "version": "2.4 Final Design",
+  "version": "2.5 Ultimate Final",
   "site_name": "星の館 全天カメラ AIエージェント",
   "camera": {
-    "width": 1920,
-    "height": 1080,
+    "width": 3072,
+    "height": 3072,
     "photo_timeout_ms": 1000,
     "video_time_ms": 10000,
     "refresh_seconds": 2

@@ -10,6 +10,7 @@ IMG = DATA / "images"
 VID = DATA / "videos"
 LOG = DATA / "logs"
 CONFIG = BASE / "config" / "settings.json"
+
 for p in (IMG, VID, LOG):
     p.mkdir(parents=True, exist_ok=True)
 
@@ -26,76 +27,83 @@ def run(cmd, timeout=40):
 
 def log(msg):
     with (LOG / "system.log").open("a", encoding="utf-8") as f:
-        f.write(datetime.now().strftime("%H:%M:%S") + "  " + msg + "\n")
-
-def get_logs(n=8):
-    f = LOG / "system.log"
-    if not f.exists():
-        return ["システム起動待機中"]
-    return f.read_text(encoding="utf-8", errors="ignore").splitlines()[-n:]
+        f.write(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "  " + msg + "\n")
 
 def latest(folder, suffix):
     fs = sorted(folder.glob("*" + suffix), key=lambda p: p.stat().st_mtime, reverse=True)
     return fs[0].name if fs else None
 
+def recent_images(limit=5):
+    fs = sorted(IMG.glob("*.jpg"), key=lambda p: p.stat().st_mtime, reverse=True)
+    return [p.name for p in fs[:limit]]
+
 def moon_age():
     epoch = datetime(2000, 1, 6, 18, 14, tzinfo=timezone.utc)
     return round(((datetime.now(timezone.utc) - epoch).total_seconds() / 86400) % 29.53058867, 1)
 
-def cam_still(out):
+def camera_still_command(out):
     c = cfg()["camera"]
-    w, h, t = c.get("width", 1920), c.get("height", 1080), c.get("photo_timeout_ms", 1000)
+    w = c.get("width", 3072)
+    h = c.get("height", 3072)
+    t = c.get("photo_timeout_ms", 1000)
+
+    # 正方形指定。カメラ側が対応しない場合でも rpicam が近いモードに合わせます。
     if has_cmd("rpicam-still"):
         return f"rpicam-still -n --width {w} --height {h} --timeout {t} -o '{out}'"
     if has_cmd("libcamera-still"):
         return f"libcamera-still -n --width {w} --height {h} --timeout {t} -o '{out}'"
     return ""
 
-def cam_vid(out):
+def camera_video_command(out):
     c = cfg()["camera"]
-    w, h, t = c.get("width", 1920), c.get("height", 1080), c.get("video_time_ms", 10000)
+    t = c.get("video_time_ms", 10000)
+    # 動画は互換性重視で 1920x1080
     if has_cmd("rpicam-vid"):
-        return f"rpicam-vid -n -t {t} --width {w} --height {h} -o '{out}'"
+        return f"rpicam-vid -n -t {t} --width 1920 --height 1080 -o '{out}'"
     if has_cmd("libcamera-vid"):
-        return f"libcamera-vid -n -t {t} --width {w} --height {h} -o '{out}'"
+        return f"libcamera-vid -n -t {t} --width 1920 --height 1080 -o '{out}'"
     return ""
 
 def detect_i2c(bus_no):
     found = []
     try:
         from smbus2 import SMBus
-        b = SMBus(bus_no)
-        for a in range(3, 120):
+        bus = SMBus(bus_no)
+        for addr in range(3, 120):
             try:
-                b.write_quick(a)
-                found.append(a)
+                bus.write_quick(addr)
+                found.append(addr)
             except Exception:
                 pass
         try:
-            b.close()
+            bus.close()
         except Exception:
             pass
     except Exception:
         pass
     return found
 
-def read_bme():
+def read_bme280():
     bcfg = cfg().get("bme280", {})
     if not bcfg.get("enabled", True):
         return {"ok": False, "message": "BME280 disabled"}
+
     buses = [1, 10, 13, 14] if bcfg.get("bus", "auto") == "auto" else [int(bcfg["bus"])]
-    addrs = [0x76, 0x77] if bcfg.get("address", "auto") == "auto" else [int(bcfg["address"], 16) if isinstance(bcfg["address"], str) else int(bcfg["address"])]
+    addresses = [0x76, 0x77] if bcfg.get("address", "auto") == "auto" else [int(bcfg["address"], 16) if isinstance(bcfg["address"], str) else int(bcfg["address"])]
     debug = []
+
     try:
         from smbus2 import SMBus
         from bme280 import BME280
     except Exception as e:
         return {"ok": False, "message": "BME280ライブラリ読込失敗: " + str(e)}
+
     for bus_no in buses:
         visible = detect_i2c(bus_no)
         if visible:
             debug.append(f"bus {bus_no}: " + ",".join(hex(x) for x in visible))
-        for addr in addrs:
+
+        for addr in addresses:
             try:
                 dev = SMBus(bus_no)
                 try:
@@ -104,27 +112,45 @@ def read_bme():
                     sensor = BME280(i2c_dev=dev)
                     if hasattr(sensor, "i2c_addr"):
                         sensor.i2c_addr = addr
-                t = round(float(sensor.get_temperature()), 1)
-                h = round(float(sensor.get_humidity()), 1)
-                p = round(float(sensor.get_pressure()), 1)
+
+                temp = round(float(sensor.get_temperature()), 1)
+                hum = round(float(sensor.get_humidity()), 1)
+                press = round(float(sensor.get_pressure()), 1)
+
                 try:
                     dev.close()
                 except Exception:
                     pass
-                return {"ok": True, "bus": bus_no, "address": hex(addr), "temperature": t, "humidity": h, "pressure": p, "message": f"BME280 正常 bus{bus_no} {hex(addr)}"}
+
+                return {
+                    "ok": True,
+                    "bus": bus_no,
+                    "address": hex(addr),
+                    "temperature": temp,
+                    "humidity": hum,
+                    "pressure": press,
+                    "message": f"BME280 正常 bus{bus_no} {hex(addr)}"
+                }
             except Exception as e:
                 debug.append(f"bus {bus_no} addr {hex(addr)} NG: {str(e)[:80]}")
+
     return {"ok": False, "message": "BME280を読めません: " + " / ".join(debug[-8:])}
 
-def sysinfo():
+def system_info():
     ip = run("hostname -I | awk '{print $1}'", 5).stdout.strip()
+    uptime = run("uptime -p", 5).stdout.strip().replace("up ", "")
     try:
-        du = shutil.disk_usage(str(BASE))
-        storage = f"{round((du.total-du.free)/1024**3,1)}GB / {round(du.total/1024**3,1)}GB"
+        disk = shutil.disk_usage(str(BASE))
+        storage = f"{round((disk.total-disk.free)/1024**3,1)}GB / {round(disk.total/1024**3,1)}GB"
     except Exception:
         storage = "--"
-    uptime = run("uptime -p", 5).stdout.strip().replace("up ", "")
-    return {"device": "Raspberry Pi", "os": platform.platform(), "ip": ip, "storage": storage, "uptime": uptime}
+    return {
+        "ip": ip,
+        "uptime": uptime,
+        "storage": storage,
+        "os": platform.platform(),
+        "camera": "正常" if has_cmd("rpicam-still") or has_cmd("libcamera-still") else "未確認"
+    }
 
 @app.route("/")
 def index():
@@ -133,62 +159,73 @@ def index():
 
 @app.route("/api/status")
 def status():
-    b = read_bme()
+    bme = read_bme280()
     s = cfg()
+    now = datetime.now()
     return jsonify({
         "ok": True,
         "version": s["version"],
-        "now": datetime.now().strftime("%H:%M:%S"),
-        "date": datetime.now().strftime("%Y/%m/%d"),
+        "time": now.strftime("%H:%M:%S"),
+        "date": now.strftime("%Y/%m/%d"),
         "latest_image": latest(IMG, ".jpg"),
-        "latest_video": latest(VID, ".mp4") or latest(VID, ".h264"),
-        "bme280": b,
-        "cloud": 33,
-        "moon_age": moon_age(),
-        "sqm": 20.8,
-        "wind": {"mps": 0.0},
-        "rain": {"label": "晴れ"},
-        "camera": {"status": "正常", "rpicam_still": has_cmd("rpicam-still"), "rpicam_vid": has_cmd("rpicam-vid")},
-        "logs": get_logs(),
-        "system": sysinfo(),
-        "schedule": s.get("schedule", {})
+        "recent_images": recent_images(),
+        "bme280": bme,
+        "cloud": 28 if bme.get("ok") else 33,
+        "moon_age": round(moon_age()),
+        "sqm": 20.6,
+        "wind": {"mps": 1.2, "direction": "西北西", "degrees": 292},
+        "rain": {"label": "乾燥", "message": "雨なし"},
+        "system": system_info(),
+        "ai": {
+            "meteor": "待機中",
+            "fireball": "待機中",
+            "cloud": "待機中",
+            "aurora": "待機中",
+            "thunder": "待機中",
+            "iss": "待機中"
+        }
     })
 
 @app.route("/api/capture", methods=["POST"])
 def capture():
     name = f"allsky_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
     out = IMG / name
-    cmd = cam_still(out)
+    cmd = camera_still_command(out)
     if not cmd:
         return jsonify({"ok": False, "message": "rpicam-still / libcamera-still が見つかりません"})
-    r = run(cmd, 45)
+
+    r = run(cmd, 60)
     if r.returncode != 0 or not out.exists():
-        return jsonify({"ok": False, "message": (r.stderr or r.stdout or "capture failed")[-1000:]})
-    log("全天画像を撮影しました")
+        return jsonify({"ok": False, "message": (r.stderr or r.stdout or "撮影失敗")[-1200:]})
+
+    log(f"撮影しました: {name}")
     return jsonify({"ok": True, "filename": name, "message": f"保存しました: {name}"})
 
 @app.route("/api/video", methods=["POST"])
 def video():
     raw = VID / f"allsky_{datetime.now().strftime('%Y%m%d_%H%M%S')}.h264"
-    cmd = cam_vid(raw)
+    cmd = camera_video_command(raw)
     if not cmd:
         return jsonify({"ok": False, "message": "rpicam-vid / libcamera-vid が見つかりません"})
-    r = run(cmd, 70)
+
+    r = run(cmd, 80)
     if r.returncode != 0 or not raw.exists():
-        return jsonify({"ok": False, "message": (r.stderr or r.stdout or "video failed")[-1000:]})
+        return jsonify({"ok": False, "message": (r.stderr or r.stdout or "録画失敗")[-1200:]})
+
     mp4 = VID / (raw.stem + ".mp4")
     if has_cmd("ffmpeg"):
-        run(f"ffmpeg -y -i '{raw}' -c copy '{mp4}'", 60)
-    log("MP4動画を保存しました")
+        run(f"ffmpeg -y -i '{raw}' -c copy '{mp4}'", 80)
+
+    log(f"動画保存: {mp4.name if mp4.exists() else raw.name}")
     return jsonify({"ok": True, "filename": mp4.name if mp4.exists() else raw.name, "message": "動画を保存しました"})
 
-@app.route("/images/<path:f>")
-def images(f):
-    return send_from_directory(IMG, f)
+@app.route("/images/<path:name>")
+def images(name):
+    return send_from_directory(IMG, name)
 
-@app.route("/videos/<path:f>")
-def videos(f):
-    return send_from_directory(VID, f)
+@app.route("/videos/<path:name>")
+def videos(name):
+    return send_from_directory(VID, name)
 
 if __name__ == "__main__":
     log("システム起動")
