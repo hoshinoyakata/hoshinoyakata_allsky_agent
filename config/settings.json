@@ -1,5 +1,5 @@
 {
-  "version": "3.2 Night AI Pro LED Ghost",
+  "version": "3.3 UI Weather Fix",
   "site_name": "星の館 全天カメラ AIエージェント",
   "camera": {
     "width": 3072,
@@ -28,7 +28,10 @@
     "save_processed_copy": true
   },
   "cloud_ai": {
-    "enabled": true
+    "enabled": true,
+    "night_cloud_by_stars": true,
+    "cloud_floor_when_no_stars": 75,
+    "star_threshold": 170
   },
   "bme280": {
     "enabled": true,
@@ -40,11 +43,13 @@
     "gpio_pin": 17,
     "pulses_per_rotation": 3,
     "cup_radius_m": 0.04,
-    "calibration_factor": 1.0
+    "calibration_factor": 1.0,
+    "sample_seconds": 2.0
   },
   "rain": {
     "enabled": false,
-    "gpio_pin": 27
+    "gpio_pin": 27,
+    "active_low": true
   },
   "schedule": {
     "regular_capture": "20:00",
