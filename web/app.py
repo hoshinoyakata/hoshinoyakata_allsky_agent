@@ -1,125 +1,103 @@
-\
-from __future__ import annotations
 
+from __future__ import annotations
 from flask import Flask, jsonify, render_template, send_from_directory
 from pathlib import Path
 from datetime import datetime, timezone
-import json
-import subprocess
+import json, shutil, subprocess
 
 BASE = Path(__file__).resolve().parents[1]
 DATA = BASE / "data"
 IMG = DATA / "images"
 VID = DATA / "videos"
-LOG = DATA / "logs"
 CONFIG = BASE / "config" / "settings.json"
-
-for p in (IMG, VID, LOG):
+for p in (IMG, VID, DATA / "logs"):
     p.mkdir(parents=True, exist_ok=True)
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
 def settings():
-    with open(CONFIG, "r", encoding="utf-8") as f:
-        return json.load(f)
+    return json.loads(CONFIG.read_text(encoding="utf-8"))
 
-def cmd(command: str, timeout: int = 30):
+def has_cmd(name):
+    return shutil.which(name) is not None
+
+def run(command, timeout=40):
     return subprocess.run(command, shell=True, text=True, capture_output=True, timeout=timeout)
 
-def latest_file(folder: Path, suffix: str):
-    files = sorted(folder.glob(f"*{suffix}"), key=lambda p: p.stat().st_mtime, reverse=True)
-    return files[0].name if files else None
+def cam_still(out):
+    c = settings()["camera"]; w=c.get("width",1920); h=c.get("height",1080); t=c.get("photo_timeout_ms",1000)
+    if has_cmd("rpicam-still"):
+        return f"rpicam-still -n --width {w} --height {h} --timeout {t} -o {out}"
+    if has_cmd("libcamera-still"):
+        return f"libcamera-still -n --width {w} --height {h} --timeout {t} -o {out}"
+    return ""
+
+def cam_vid(out):
+    c = settings()["camera"]; w=c.get("width",1920); h=c.get("height",1080); t=c.get("video_time_ms",10000)
+    if has_cmd("rpicam-vid"):
+        return f"rpicam-vid -n -t {t} --width {w} --height {h} -o {out}"
+    if has_cmd("libcamera-vid"):
+        return f"libcamera-vid -n -t {t} --width {w} --height {h} -o {out}"
+    return ""
+
+def latest(folder, suffix):
+    fs = sorted(folder.glob("*"+suffix), key=lambda p:p.stat().st_mtime, reverse=True)
+    return fs[0].name if fs else None
 
 def moon_age():
-    epoch = datetime(2000, 1, 6, 18, 14, tzinfo=timezone.utc)
-    now = datetime.now(timezone.utc)
-    days = (now - epoch).total_seconds() / 86400.0
-    return round(days % 29.53058867, 1)
+    epoch = datetime(2000,1,6,18,14,tzinfo=timezone.utc)
+    return round(((datetime.now(timezone.utc)-epoch).total_seconds()/86400)%29.53058867,1)
 
 def read_bme280():
-    cfg = settings().get("bme280", {})
-    if not cfg.get("enabled", True):
-        return {"ok": False, "message": "BME280 disabled"}
+    cfg=settings().get("bme280",{})
     try:
         from smbus2 import SMBus
         from bme280 import BME280
-        bus_no = int(cfg.get("bus", 1))
-        addr_raw = cfg.get("address", "0x76")
-        address = int(addr_raw, 16) if isinstance(addr_raw, str) else int(addr_raw)
-        sensor = BME280(i2c_dev=SMBus(bus_no), address=address)
-        return {
-            "ok": True,
-            "address": hex(address),
-            "temperature": round(float(sensor.get_temperature()), 1),
-            "humidity": round(float(sensor.get_humidity()), 1),
-            "pressure": round(float(sensor.get_pressure()), 1),
-        }
+        addr = int(cfg.get("address","0x76"),16)
+        sensor = BME280(i2c_dev=SMBus(int(cfg.get("bus",1))), address=addr)
+        return {"ok":True,"address":hex(addr),"temperature":round(float(sensor.get_temperature()),1),
+                "humidity":round(float(sensor.get_humidity()),1),"pressure":round(float(sensor.get_pressure()),1)}
     except Exception as e:
-        return {"ok": False, "message": str(e)}
-
-def read_wind():
-    return {"ok": True, "wind_mps": 0.0, "message": "待機中"}
+        return {"ok":False,"message":str(e)}
 
 @app.route("/")
 def index():
-    s = settings()
-    return render_template("index.html", version=s.get("version", "2.0"), site_name=s.get("site_name", "星の館 全天カメラ"))
+    s=settings()
+    return render_template("index.html", site_name=s["site_name"], version=s["version"])
 
 @app.route("/api/status")
-def api_status():
-    return jsonify({
-        "ok": True,
-        "version": settings().get("version", "2.0"),
-        "time": datetime.now().strftime("%Y/%m/%d %H:%M:%S"),
-        "latest_image": latest_file(IMG, ".jpg"),
-        "latest_video": latest_file(VID, ".mp4"),
-        "bme280": read_bme280(),
-        "wind": read_wind(),
-        "cloud": 33,
-        "moon_age": moon_age(),
-        "sqm": 20.8,
-    })
+def status():
+    return jsonify({"ok":True,"version":settings()["version"],"latest_image":latest(IMG,".jpg"),
+        "latest_video":latest(VID,".mp4"),"bme280":read_bme280(),"cloud":33,"moon_age":moon_age(),"sqm":20.8,
+        "wind":{"ok":True,"wind_mps":0.0},
+        "camera":{"rpicam_still":has_cmd("rpicam-still"),"rpicam_vid":has_cmd("rpicam-vid"),
+                  "libcamera_still":has_cmd("libcamera-still"),"libcamera_vid":has_cmd("libcamera-vid")}})
 
 @app.route("/api/capture", methods=["POST"])
 def capture():
-    s = settings()
-    name = f"allsky_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
-    out = IMG / name
-    command = s["camera"]["capture_command"].format(output=str(out))
-    try:
-        r = cmd(command, timeout=30)
-        if r.returncode != 0 or not out.exists():
-            return jsonify({"ok": False, "message": (r.stderr or r.stdout or "capture failed")[-800:]})
-        return jsonify({"ok": True, "filename": name, "message": f"保存しました: {name}"})
-    except Exception as e:
-        return jsonify({"ok": False, "message": str(e)})
+    name=f"allsky_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"; out=IMG/name
+    command=cam_still(out)
+    if not command: return jsonify({"ok":False,"message":"rpicam-still / libcamera-still が見つかりません"})
+    r=run(command)
+    if r.returncode!=0 or not out.exists(): return jsonify({"ok":False,"message":(r.stderr or r.stdout or "capture failed")[-900:]})
+    return jsonify({"ok":True,"filename":name,"message":f"保存しました: {name}"})
 
 @app.route("/api/video", methods=["POST"])
 def video():
-    s = settings()
-    name_h264 = f"allsky_{datetime.now().strftime('%Y%m%d_%H%M%S')}.h264"
-    out_h264 = VID / name_h264
-    command = s["camera"]["video_command"].format(output=str(out_h264))
-    try:
-        r = cmd(command, timeout=40)
-        if r.returncode != 0 or not out_h264.exists():
-            return jsonify({"ok": False, "message": (r.stderr or r.stdout or "video failed")[-800:]})
-        name_mp4 = name_h264.replace(".h264", ".mp4")
-        out_mp4 = VID / name_mp4
-        cmd(f"ffmpeg -y -i {out_h264} -c copy {out_mp4}", timeout=60)
-        if out_mp4.exists():
-            return jsonify({"ok": True, "filename": name_mp4, "message": f"動画保存: {name_mp4}"})
-        return jsonify({"ok": True, "filename": name_h264, "message": f"動画保存: {name_h264}"})
-    except Exception as e:
-        return jsonify({"ok": False, "message": str(e)})
+    raw_name=f"allsky_{datetime.now().strftime('%Y%m%d_%H%M%S')}.h264"; raw=VID/raw_name
+    command=cam_vid(raw)
+    if not command: return jsonify({"ok":False,"message":"rpicam-vid / libcamera-vid が見つかりません"})
+    r=run(command,60)
+    if r.returncode!=0 or not raw.exists(): return jsonify({"ok":False,"message":(r.stderr or r.stdout or "video failed")[-900:]})
+    mp4=VID/raw_name.replace(".h264",".mp4")
+    if has_cmd("ffmpeg"): run(f"ffmpeg -y -i {raw} -c copy {mp4}",60)
+    if mp4.exists(): return jsonify({"ok":True,"filename":mp4.name,"message":f"MP4保存しました: {mp4.name}"})
+    return jsonify({"ok":True,"filename":raw.name,"message":f"H264保存しました: {raw.name}"})
 
-@app.route("/images/<path:filename>")
-def images(filename):
-    return send_from_directory(IMG, filename)
+@app.route("/images/<path:f>")
+def images(f): return send_from_directory(IMG,f)
+@app.route("/videos/<path:f>")
+def videos(f): return send_from_directory(VID,f)
 
-@app.route("/videos/<path:filename>")
-def videos(filename):
-    return send_from_directory(VID, filename)
-
-if __name__ == "__main__":
+if __name__=="__main__":
     app.run(host="0.0.0.0", port=5000)

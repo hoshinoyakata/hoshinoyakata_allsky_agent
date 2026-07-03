@@ -1,9 +1,11 @@
 {
-  "version": "2.0",
+  "version": "2.1",
   "site_name": "星の館 全天カメラ AIエージェント",
   "camera": {
-    "capture_command": "libcamera-still -n --width 1920 --height 1080 --timeout 1000 -o {output}",
-    "video_command": "libcamera-vid -n -t 10000 --width 1920 --height 1080 -o {output}"
+    "width": 1920,
+    "height": 1080,
+    "photo_timeout_ms": 1000,
+    "video_time_ms": 10000
   },
   "bme280": {
     "enabled": true,
@@ -13,15 +15,10 @@
   "wind": {
     "enabled": true,
     "gpio_pin": 17,
-    "pulses_per_rotation": 3,
-    "cup_radius_m": 0.04,
-    "calibration_factor": 1.0
-  },
-  "rain": {
-    "enabled": false,
-    "gpio_pin": 27
+    "pulses_per_rotation": 3
   },
   "display": {
-    "show_fisheye_guide": true
+    "show_fisheye_guide": true,
+    "guide_size_percent": 76
   }
 }
