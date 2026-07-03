@@ -46,8 +46,6 @@ def camera_still_command(out):
     w = c.get("width", 3072)
     h = c.get("height", 3072)
     t = c.get("photo_timeout_ms", 1000)
-
-    # 正方形指定。カメラ側が対応しない場合でも rpicam が近いモードに合わせます。
     if has_cmd("rpicam-still"):
         return f"rpicam-still -n --width {w} --height {h} --timeout {t} -o '{out}'"
     if has_cmd("libcamera-still"):
@@ -57,7 +55,6 @@ def camera_still_command(out):
 def camera_video_command(out):
     c = cfg()["camera"]
     t = c.get("video_time_ms", 10000)
-    # 動画は互換性重視で 1920x1080
     if has_cmd("rpicam-vid"):
         return f"rpicam-vid -n -t {t} --width 1920 --height 1080 -o '{out}'"
     if has_cmd("libcamera-vid"):
@@ -102,7 +99,6 @@ def read_bme280():
         visible = detect_i2c(bus_no)
         if visible:
             debug.append(f"bus {bus_no}: " + ",".join(hex(x) for x in visible))
-
         for addr in addresses:
             try:
                 dev = SMBus(bus_no)
@@ -116,12 +112,10 @@ def read_bme280():
                 temp = round(float(sensor.get_temperature()), 1)
                 hum = round(float(sensor.get_humidity()), 1)
                 press = round(float(sensor.get_pressure()), 1)
-
                 try:
                     dev.close()
                 except Exception:
                     pass
-
                 return {
                     "ok": True,
                     "bus": bus_no,
@@ -133,7 +127,6 @@ def read_bme280():
                 }
             except Exception as e:
                 debug.append(f"bus {bus_no} addr {hex(addr)} NG: {str(e)[:80]}")
-
     return {"ok": False, "message": "BME280を読めません: " + " / ".join(debug[-8:])}
 
 def system_info():
@@ -175,15 +168,7 @@ def status():
         "sqm": 20.6,
         "wind": {"mps": 1.2, "direction": "西北西", "degrees": 292},
         "rain": {"label": "乾燥", "message": "雨なし"},
-        "system": system_info(),
-        "ai": {
-            "meteor": "待機中",
-            "fireball": "待機中",
-            "cloud": "待機中",
-            "aurora": "待機中",
-            "thunder": "待機中",
-            "iss": "待機中"
-        }
+        "system": system_info()
     })
 
 @app.route("/api/capture", methods=["POST"])
@@ -193,11 +178,9 @@ def capture():
     cmd = camera_still_command(out)
     if not cmd:
         return jsonify({"ok": False, "message": "rpicam-still / libcamera-still が見つかりません"})
-
     r = run(cmd, 60)
     if r.returncode != 0 or not out.exists():
         return jsonify({"ok": False, "message": (r.stderr or r.stdout or "撮影失敗")[-1200:]})
-
     log(f"撮影しました: {name}")
     return jsonify({"ok": True, "filename": name, "message": f"保存しました: {name}"})
 
@@ -207,15 +190,12 @@ def video():
     cmd = camera_video_command(raw)
     if not cmd:
         return jsonify({"ok": False, "message": "rpicam-vid / libcamera-vid が見つかりません"})
-
     r = run(cmd, 80)
     if r.returncode != 0 or not raw.exists():
         return jsonify({"ok": False, "message": (r.stderr or r.stdout or "録画失敗")[-1200:]})
-
     mp4 = VID / (raw.stem + ".mp4")
     if has_cmd("ffmpeg"):
         run(f"ffmpeg -y -i '{raw}' -c copy '{mp4}'", 80)
-
     log(f"動画保存: {mp4.name if mp4.exists() else raw.name}")
     return jsonify({"ok": True, "filename": mp4.name if mp4.exists() else raw.name, "message": "動画を保存しました"})
 
