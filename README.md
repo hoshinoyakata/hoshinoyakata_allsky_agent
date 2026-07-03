@@ -1,20 +1,19 @@
-# 星の館 全天カメラ AIエージェント Ver.2.7 Safe Fit
+# Ver.2.8 Round True Fit Patch
 
-Ver2.6で魚眼円が入りきらなかったため、表示倍率を安全側に修正した版です。
+青い線が楕円になる原因は、全画面表示時にライブビュー自体が16:9へ伸びていたことです。
 
-## 修正点
-- ライブビューは正方形のまま
-- 魚眼画像の表示倍率を 96% → 86% に変更
-- ガイド円も 88% → 78% に変更
-- 全天円が切れずに全部入るように余白を確保
-- 1920×1080ディスプレイ用レイアウト維持
+## 修正内容
+- viewer の中に skyStage という正方形ステージを追加
+- 画像、青いガイド円、N/E/S/W をすべて skyStage 内に配置
+- 全画面表示でも skyStage は `min(94vw, 94vh)` で真四角を維持
+- 青いガイド円は楕円にならず、真円になります
 
-## ラズパイ更新
+## 更新方法
+GitHubへ上書き → Commit → Push → ラズパイで
 ```bash
 cd ~/hoshinoyakata_allsky_agent_real_v2
 git pull
 bash scripts/install.sh
 sudo systemctl restart hoshinoyakata-allsky
 ```
-
-更新後はブラウザで Ctrl + F5。
+ブラウザは Ctrl + F5。

@@ -1,5 +1,5 @@
 {
-  "version": "2.7 Safe Fit",
+  "version": "2.8 Round True Fit",
   "site_name": "星の館 全天カメラ AIエージェント",
   "camera": {
     "width": 3072,
@@ -9,8 +9,9 @@
     "refresh_seconds": 2
   },
   "display": {
-    "fisheye_scale": 0.86,
-    "guide_scale": 0.78
+    "stage_scale": 0.94,
+    "image_scale": 0.92,
+    "guide_scale": 0.92
   },
   "bme280": {
     "enabled": true,
