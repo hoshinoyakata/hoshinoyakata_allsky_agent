@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-echo "I2C buses:"
+cd "$(dirname "$0")/.."
+source venv/bin/activate || true
+python - <<'PY'
+from bme280 import BME280
+import inspect
+print(inspect.signature(BME280))
+PY
 i2cdetect -l || true
-echo ""
 for b in 1 10 13 14; do
-  if [ -e /dev/i2c-$b ]; then
-    echo "---- bus $b ----"
-    sudo i2cdetect -y $b || true
-  fi
+  [ -e /dev/i2c-$b ] && echo "---- bus $b ----" && sudo i2cdetect -y $b || true
 done

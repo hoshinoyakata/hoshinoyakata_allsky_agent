@@ -1,22 +1,17 @@
-# 星の館 全天カメラ AIエージェント v2.2
+# 星の館 全天カメラ AIエージェント Ver.2.3 Professional
 
-## v2.2 修正
-- BME280読み取りを強化
-- 0x76 / 0x77 を自動判定
-- bus 1 / 10 / 13 / 14 を自動確認
-- BME280のエラー内容を画面に表示
-- rpicam-still / rpicam-vid 対応継続
-- 魚眼ガイドON/OFFボタン追加
-- 保存画像表示を安定化
+- Professionalデザイン
+- 全天円が画面内に必ず入る表示
+- 方位リング/ガイド線 ON/OFF
+- BME280対応 bus1/10/13/14・0x76/0x77自動
+- Pimoroni BME280 i2c_addr対応
+- rpicam-still / rpicam-vid 対応
+- 写真撮影・MP4録画
+- 気象カード・ログ・予定・システム情報・簡易グラフ
 
-## 更新
+## Raspberry Pi更新
 ```bash
 cd ~/hoshinoyakata_allsky_agent_real_v2
 git pull
 bash scripts/install.sh
-```
-
-## BME確認
-```bash
-bash scripts/check_bme280.sh
 ```

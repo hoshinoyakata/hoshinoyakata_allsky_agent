@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 which rpicam-still || true
 which rpicam-vid || true
 which libcamera-still || true
