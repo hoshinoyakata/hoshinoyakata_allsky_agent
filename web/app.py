@@ -9,8 +9,9 @@ BASE = Path(__file__).resolve().parents[1]
 DATA = BASE / "data"
 IMG = DATA / "images"
 VID = DATA / "videos"
+LOG = DATA / "logs"
 CONFIG = BASE / "config" / "settings.json"
-for p in (IMG, VID, DATA / "logs"):
+for p in (IMG, VID, LOG):
     p.mkdir(parents=True, exist_ok=True)
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
@@ -48,17 +49,62 @@ def moon_age():
     epoch = datetime(2000,1,6,18,14,tzinfo=timezone.utc)
     return round(((datetime.now(timezone.utc)-epoch).total_seconds()/86400)%29.53058867,1)
 
+def detect_i2c_addresses(bus_no):
+    found = []
+    try:
+        from smbus2 import SMBus
+        bus = SMBus(bus_no)
+        for addr in range(0x03, 0x78):
+            try:
+                bus.write_quick(addr)
+                found.append(addr)
+            except Exception:
+                pass
+        try:
+            bus.close()
+        except Exception:
+            pass
+    except Exception:
+        pass
+    return found
+
 def read_bme280():
     cfg=settings().get("bme280",{})
+    if not cfg.get("enabled", True):
+        return {"ok":False,"message":"BME280 disabled"}
+
+    bus_setting = cfg.get("bus","auto")
+    addr_setting = cfg.get("address","auto")
+
+    buses = [1,10,13,14] if bus_setting == "auto" else [int(bus_setting)]
+    addrs = [0x76,0x77] if addr_setting == "auto" else [int(addr_setting,16) if isinstance(addr_setting,str) else int(addr_setting)]
+
+    debug = []
     try:
         from smbus2 import SMBus
         from bme280 import BME280
-        addr = int(cfg.get("address","0x76"),16)
-        sensor = BME280(i2c_dev=SMBus(int(cfg.get("bus",1))), address=addr)
-        return {"ok":True,"address":hex(addr),"temperature":round(float(sensor.get_temperature()),1),
-                "humidity":round(float(sensor.get_humidity()),1),"pressure":round(float(sensor.get_pressure()),1)}
     except Exception as e:
-        return {"ok":False,"message":str(e)}
+        return {"ok":False,"message":"BME280ライブラリ読込失敗: "+str(e)}
+
+    for bus_no in buses:
+        visible = detect_i2c_addresses(bus_no)
+        if visible:
+            debug.append(f"bus {bus_no}: " + ",".join(hex(a) for a in visible))
+        for addr in addrs:
+            try:
+                bus = SMBus(bus_no)
+                sensor = BME280(i2c_dev=bus, address=addr)
+                temp = round(float(sensor.get_temperature()),1)
+                hum = round(float(sensor.get_humidity()),1)
+                pres = round(float(sensor.get_pressure()),1)
+                try:
+                    bus.close()
+                except Exception:
+                    pass
+                return {"ok":True,"bus":bus_no,"address":hex(addr),"temperature":temp,"humidity":hum,"pressure":pres,"debug":" / ".join(debug)}
+            except Exception as e:
+                debug.append(f"bus {bus_no} addr {hex(addr)} NG: {str(e)[:80]}")
+    return {"ok":False,"message":"BME280を読めません: "+" / ".join(debug[-8:])}
 
 @app.route("/")
 def index():

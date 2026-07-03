@@ -1,5 +1,5 @@
 {
-  "version": "2.1",
+  "version": "2.2",
   "site_name": "星の館 全天カメラ AIエージェント",
   "camera": {
     "width": 1920,
@@ -9,8 +9,8 @@
   },
   "bme280": {
     "enabled": true,
-    "bus": 1,
-    "address": "0x76"
+    "bus": "auto",
+    "address": "auto"
   },
   "wind": {
     "enabled": true,
