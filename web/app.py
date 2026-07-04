@@ -55,6 +55,7 @@ def still_cmd(out):
     ex,g,t=presets.get(mode,presets['auto'])
     return f"{tool} -n --width {w} --height {h} --shutter {ex} --gain {g} --awbgains 1.35,1.55 --denoise cdn_hq --timeout {t} -o '{out}'"
 def cloud(p,nightmode=False):
+    if not cfg().get('camera',{}).get('ai_enabled',True): return 0,'AI OFF'
     if not p or not p.exists(): return 33,'画像待機中'
     try:
         from PIL import Image
@@ -91,12 +92,13 @@ def cloud(p,nightmode=False):
         return int(max(0,min(100,round(raw)))),'画像AI解析'
     except Exception: return 33,'雲量AIエラー'
 def sea_level(station,alt): return station/((1-alt/44330.0)**5.255)
-def pressure_fix(raw,alt=108,auto=True,offset=0.0):
+def pressure_fix(raw,alt=108,auto=True,offset=38.0):
     raw=float(raw); station=raw; unit='hPa'
     if auto and raw<850:
         station=raw*1.3332239; unit='mmHg→hPa'
-    station+=float(offset); sea=sea_level(station,float(alt))
-    return round(raw,2),unit,round(station,1),round(sea,1)
+    sea_no_offset=sea_level(station,float(alt))
+    sea=sea_no_offset+float(offset)
+    return round(raw,2),unit,round(station,1),round(sea,1),round(sea_no_offset,1),round(float(offset),1)
 def read_bme():
     bs=cfg().get('bme280',{}); alt=float(bs.get('altitude_m',108)); auto=bool(bs.get('pressure_unit_auto_fix',True)); off=float(bs.get('pressure_offset_hpa',0))
     try:
@@ -112,8 +114,8 @@ def read_bme():
                     try: sensor=BME280(i2c_dev=bus,i2c_addr=addr)
                     except TypeError: sensor=BME280(i2c_dev=bus)
                     temp=float(sensor.get_temperature()); hum=float(sensor.get_humidity()); raw=float(sensor.get_pressure())
-                    rawv,unit,station,sea=pressure_fix(raw,alt,auto,off)
-                    return {'ok':True,'temperature':round(temp,1),'humidity':round(hum,1),'pressure':sea,'station_pressure':station,'raw_pressure':rawv,'raw_unit':unit,'altitude_m':int(alt),'message':f'BME280 bus{busno} {hex(addr)}'}
+                    rawv,unit,station,sea,sea_raw,offset=pressure_fix(raw,alt,auto,off)
+                    return {'ok':True,'temperature':round(temp,1),'humidity':round(hum,1),'pressure':sea,'station_pressure':station,'sea_no_offset':sea_raw,'offset_hpa':offset,'raw_pressure':rawv,'raw_unit':unit,'altitude_m':int(alt),'message':f'BME280 bus{busno} {hex(addr)}'}
                 except Exception as e: last=str(e)
         return {'ok':False,'message':'BME280未読込: '+last}
     except Exception as e: return {'ok':False,'message':'BME280ライブラリ未読込: '+str(e)}
@@ -128,9 +130,9 @@ def read_wind():
             if last==1 and now==0 and time.time()-deb>.02: count+=1; deb=time.time()
             last=now; time.sleep(.002)
         rps=(count/float(w.get('pulses_per_rotation',3)))/float(w.get('sample_seconds',2)); mps=round(rps*(2*math.pi*float(w.get('cup_radius_m',.04)))*float(w.get('calibration_factor',1)),1)
-        return {'mps':mps,'deg':0,'gust':round(mps*1.8,1),'message':f'GPIO{pin} {count}p'}
-    except Exception: return {'mps':0.0,'deg':0,'gust':0.0,'message':'風速未読込'}
-def read_rain(): return {'label':'雨なし','message':'雨センサー未使用'}
+        return {'mps':mps,'deg':None,'gust':round(mps*1.8,1),'message':f'GPIO{pin} {count}p / 風向未接続'}
+    except Exception: return {'mps':0.0,'deg':None,'gust':0.0,'message':'風速未読込'}
+def read_rain(): return {'label':'未接続','message':'雨センサー未使用'}
 @app.route('/')
 def index():
     s=cfg(); return render_template('index.html',site_name=s['site_name'],version=s['version'])
@@ -141,14 +143,30 @@ def status():
     return jsonify(ok=True,version=s['version'],latest_image=lp.name if lp else None,latest_mtime=lp.stat().st_mtime if lp else None,recent_images=recent_detail(),live_capture_seconds=s.get("camera",{}).get("live_capture_seconds",5),auto_capture_enabled=s.get("camera",{}).get("auto_capture_enabled",True),bme280=read_bme(),cloud=cp,cloud_message=cm,moon_age=round(moon_age()),sqm=20.6,wind=read_wind(),rain=read_rain(),system={'ip':ip,'uptime':up},live=st.get('live','on'),recording=st.get('recording',False),camera_status=st.get('camera_status','live'),night={'mode':mode,'active':active,'exposure_us':s['camera'].get('night_exposure_us',1800000),'gain':s['camera'].get('night_gain',20)})
 @app.route('/api/control',methods=['POST'])
 def control():
-    action=(request.get_json(force=True,silent=True) or {}).get('action',''); st=state(); msg='操作しました'
-    if action=='live_on': st['live']='on'; st['camera_status']='live'; msg='ライブ開始'
-    elif action=='live_off': st['live']='off'; st['camera_status']='offline'; msg='ライブ停止'
-    elif action=='record_start': st['recording']=True; st['camera_status']='recording'; msg='録画中'
-    elif action=='record_stop': st['recording']=False; st['camera_status']='live' if st.get('live')=='on' else 'offline'; msg='録画停止'
-    elif action=='ai_on': st['ai']='on'; msg='AI解析ON'
-    elif action=='ai_off': st['ai']='off'; msg='AI解析OFF'
-    save_state(st); return jsonify(ok=True,message=msg,state=st)
+    action=(request.get_json(force=True,silent=True) or {}).get('action',''); st=state(); msg='操作しました'; ok=True
+    if action=='live_on':
+        s=cfg(); s.setdefault('camera',{})['auto_capture_enabled']=True; save_cfg(s)
+        st['live']='on'; st['camera_status']='live'; msg='LIVE開始：外部自動撮影ON'
+    elif action=='live_off':
+        s=cfg(); s.setdefault('camera',{})['auto_capture_enabled']=False; save_cfg(s)
+        st['live']='off'; st['camera_status']='offline'; msg='LIVE停止：外部自動撮影OFF'
+    elif action=='record_start':
+        ok=False; msg='動画録画は準備中です。今は静止画ライブを優先しています。'
+    elif action=='record_stop':
+        st['recording']=False; st['camera_status']='live' if st.get('live')=='on' else 'offline'; msg='録画停止（準備中）'
+    elif action=='ai_on':
+        s=cfg(); s.setdefault('camera',{})['ai_enabled']=True; save_cfg(s)
+        st['ai']='on'; msg='雲量AI ON'
+    elif action=='ai_off':
+        s=cfg(); s.setdefault('camera',{})['ai_enabled']=False; save_cfg(s)
+        st['ai']='off'; msg='雲量AI OFF'
+    elif action=='system_restart':
+        ok=False; msg='安全のためWebからの再起動は準備中です。ターミナルで scripts/restart.sh を使ってください。'
+    elif action=='shutdown':
+        ok=False; msg='安全のためシャットダウンは未接続です。'
+    else:
+        ok=False; msg='不明な操作'
+    save_state(st); return jsonify(ok=ok,message=msg,state=st)
 @app.route('/api/night_mode',methods=['POST'])
 def night_mode():
     mode=(request.get_json(force=True,silent=True) or {}).get('mode','auto'); s=cfg(); s['camera']['night_mode']=mode; save_cfg(s); return jsonify(ok=True,message=f'星空感度: {mode}')
@@ -160,7 +178,7 @@ def capture():
     return jsonify(ok=ok,filename=out.name,message='保存しました' if ok else (r.stderr or '撮影失敗')[-800:])
 @app.route('/api/video',methods=['POST'])
 def video():
-    st=state(); st['recording']=True; st['camera_status']='recording'; save_state(st); return jsonify(ok=True,message='録画開始状態にしました')
+    return jsonify(ok=False,message='動画録画は準備中です。今は静止画ライブを優先しています。')
 @app.route('/images/<path:n>')
 def images(n): return send_from_directory(IMG,n)
 @app.route('/videos/<path:n>')

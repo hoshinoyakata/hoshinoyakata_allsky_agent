@@ -110,3 +110,7 @@
   width:96%;
   height:96%;
 }
+
+.prep{color:#ffd447!important;border-color:#8a6b00!important}.disabled{opacity:.65}
+
+.aiRow span.prep,.pubRow span.prep{color:#ffd447!important;border-color:#8a6b00!important}

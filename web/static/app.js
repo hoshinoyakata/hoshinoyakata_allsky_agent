@@ -56,7 +56,7 @@ async function loadStatus(force=false){
       setText("temp",`${b.temperature}℃`);
       setText("hum",`${b.humidity}%`);
       setText("press",`${b.pressure} hPa`);
-      setText("pressDetail",`現地 ${b.station_pressure} / raw ${b.raw_pressure} ${b.raw_unit} / 標高${b.altitude_m}m`);
+      setText("pressDetail",`raw ${b.raw_pressure} ${b.raw_unit} / 補正+${b.offset_hpa||0} / 標高${b.altitude_m}m`);
     }else{
       setText("temp","--");
       setText("hum","--");
@@ -73,7 +73,7 @@ async function loadStatus(force=false){
     const w=s.wind||{};
     setText("wind",`${w.mps??0} m/s`);
     setText("windMsg",w.message||"--");
-    setText("windDeg",`${w.deg??0}°`);
+    setText("windDeg",w.deg==null?"未接続":`${w.deg}°`);
     setText("gust",`${w.gust??0} m/s`);
 
     const r=s.rain||{};
@@ -115,11 +115,7 @@ async function capture(){
   }
 }
 
-async function recordStart(){
-  await control("record_start");
-  await fetch("/api/video",{method:"POST",cache:"no-store"});
-  loadStatus(true);
-}
+async function recordStart(){await control("record_start");}
 async function recordStop(){await control("record_stop");}
 
 async function control(action){

@@ -1,5 +1,5 @@
 {
-  "version": "4.7 External Capture Stable",
+  "version": "5.0 Practical Complete",
   "site_name": "星の館 全天カメラAIエージェント",
   "camera": {
     "width": 3072,
@@ -13,7 +13,8 @@
     "auto_capture_enabled": true,
     "live_capture_seconds": 5,
     "keep_images": 1200,
-    "capture_timeout_seconds": 30
+    "capture_timeout_seconds": 30,
+    "ai_enabled": true
   },
   "bme280": {
     "enabled": true,
@@ -21,7 +22,7 @@
     "address": "auto",
     "altitude_m": 108,
     "pressure_unit_auto_fix": true,
-    "pressure_offset_hpa": 0.0
+    "pressure_offset_hpa": 38.0
   },
   "wind": {
     "enabled": true,
@@ -40,5 +41,14 @@
     "thumb_label": "actual_time",
     "fullscreen_scale": "96vh",
     "image_scale": 1.0
+  },
+  "features": {
+    "meteor_detection": false,
+    "fireball_detection": false,
+    "airplane_detection": false,
+    "satellite_detection": false,
+    "lightning_detection": false,
+    "homepage_upload": false,
+    "instagram_upload": false
   }
 }
