@@ -1,87 +1,91 @@
 #!/usr/bin/env python3
-import argparse
-import shutil
-import subprocess
-import sys
-import time
-from datetime import datetime
+# Hoshinoyakata Allsky Ver5.6 - NAS MP4 recorder
+from __future__ import annotations
+import argparse, datetime as dt, json, os, shutil, subprocess, sys, time
 from pathlib import Path
 
-DEFAULT_NAS = Path('/mnt/hoshinoyakata_nas/全天カメラ')
-DEFAULT_SOURCE = DEFAULT_NAS / 'latest.jpg'
-DEFAULT_VIDEO_DIR = DEFAULT_NAS / 'MP4動画'
-DEFAULT_LOG_DIR = DEFAULT_NAS / 'システムログ'
+BASE = Path(__file__).resolve().parents[1]
+NAS_BASE = Path(os.environ.get("HOSHI_NAS_BASE", "/mnt/hoshinoyakata_nas/全天カメラ"))
+VIDEO_DIR = Path(os.environ.get("HOSHI_VIDEO_DIR", str(NAS_BASE / "MP4動画")))
+IMAGE_DIRS = [NAS_BASE, BASE / "data" / "images"]
+STATUS_FILE = BASE / "data" / "mp4_record_status.json"
 
+def write_status(**kw):
+    STATUS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    base = {"ok": True, "recording": False, "message": "idle", "updated": dt.datetime.now().isoformat(timespec="seconds")}
+    base.update(kw)
+    STATUS_FILE.write_text(json.dumps(base, ensure_ascii=False, indent=2), encoding="utf-8")
 
-def log(msg: str) -> None:
-    ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    print(f'[{ts}] {msg}', flush=True)
-    try:
-        DEFAULT_LOG_DIR.mkdir(parents=True, exist_ok=True)
-        with (DEFAULT_LOG_DIR / 'mp4_record.log').open('a', encoding='utf-8') as f:
-            f.write(f'[{ts}] {msg}\n')
-    except Exception:
-        pass
+def latest_images(limit: int = 300):
+    items = []
+    for d in IMAGE_DIRS:
+        if not d.exists():
+            continue
+        for p in d.glob("*.jpg"):
+            if p.name.startswith("allsky_") or p.name == "latest.jpg":
+                try:
+                    items.append((p.stat().st_mtime, p))
+                except FileNotFoundError:
+                    pass
+    # unique paths, newest first
+    seen, out = set(), []
+    for _, p in sorted(items, reverse=True):
+        if p.resolve() not in seen and p.name != "latest.jpg":
+            seen.add(p.resolve()); out.append(p)
+            if len(out) >= limit: break
+    return list(reversed(out))
 
+def have_ffmpeg():
+    return shutil.which("ffmpeg") is not None
 
-def main() -> int:
-    ap = argparse.ArgumentParser(description='星の館 全天カメラ NAS MP4録画')
-    ap.add_argument('--seconds', type=int, default=30, help='録画秒数')
-    ap.add_argument('--fps', type=int, default=2, help='MP4のフレームレート')
-    ap.add_argument('--source', default=str(DEFAULT_SOURCE), help='latest.jpg の場所')
-    ap.add_argument('--outdir', default=str(DEFAULT_VIDEO_DIR), help='MP4保存先')
+def make_video(seconds: int, fps: int, output: Path):
+    VIDEO_DIR.mkdir(parents=True, exist_ok=True)
+    end = time.time() + seconds
+    frames = []
+    frame_interval = 1.0 / max(1, fps)
+    temp_dir = BASE / "data" / "mp4_frames_tmp"
+    if temp_dir.exists(): shutil.rmtree(temp_dir)
+    temp_dir.mkdir(parents=True, exist_ok=True)
+    i = 0
+    write_status(recording=True, message="recording", seconds=seconds, fps=fps, output=str(output))
+    while time.time() < end:
+        imgs = latest_images(1)
+        if imgs:
+            src = imgs[-1]
+            dst = temp_dir / f"frame_{i:05d}.jpg"
+            try:
+                shutil.copy2(src, dst); frames.append(dst); i += 1
+            except Exception as e:
+                write_status(recording=True, message=f"frame copy error: {e}", output=str(output))
+        time.sleep(frame_interval)
+    if not frames:
+        raise RuntimeError("録画用の静止画が見つかりませんでした")
+    if not have_ffmpeg():
+        raise RuntimeError("ffmpeg が見つかりません。sudo apt install -y ffmpeg を実行してください")
+    cmd = ["ffmpeg", "-y", "-framerate", str(fps), "-i", str(temp_dir / "frame_%05d.jpg"),
+           "-c:v", "libx264", "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(output)]
+    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    if proc.returncode != 0:
+        raise RuntimeError(proc.stderr[-2000:])
+    shutil.rmtree(temp_dir, ignore_errors=True)
+    write_status(recording=False, message="saved", output=str(output), bytes=output.stat().st_size)
+    return output
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--seconds", type=int, default=30)
+    ap.add_argument("--fps", type=int, default=2)
     args = ap.parse_args()
-
-    source = Path(args.source)
-    outdir = Path(args.outdir)
-    outdir.mkdir(parents=True, exist_ok=True)
-
-    if not source.exists():
-        log(f'ERROR: source not found: {source}')
-        return 2
-    if shutil.which('ffmpeg') is None:
-        log('ERROR: ffmpeg not installed')
-        return 3
-
-    stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    work = Path('/tmp') / f'hoshinoyakata_mp4_{stamp}'
-    work.mkdir(parents=True, exist_ok=True)
-    output = outdir / f'allsky_{stamp}.mp4'
-
-    frames = max(1, args.seconds * args.fps)
-    interval = 1.0 / max(1, args.fps)
-    log(f'MP4 recording start: {args.seconds}s {args.fps}fps -> {output}')
-
-    last_size = -1
-    for i in range(frames):
-        frame = work / f'frame_{i:05d}.jpg'
-        try:
-            shutil.copy2(source, frame)
-            size = frame.stat().st_size
-            if size != last_size:
-                last_size = size
-        except Exception as e:
-            log(f'WARN: copy failed: {e}')
-        time.sleep(interval)
-
-    cmd = [
-        'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error',
-        '-framerate', str(args.fps),
-        '-i', str(work / 'frame_%05d.jpg'),
-        '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-movflags', '+faststart',
-        str(output)
-    ]
+    ts = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+    out = VIDEO_DIR / f"allsky_{ts}.mp4"
+    print(f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] MP4 recording start: {args.seconds}s {args.fps}fps -> {out}", flush=True)
     try:
-        subprocess.run(cmd, check=True)
-    except subprocess.CalledProcessError as e:
-        log(f'ERROR: ffmpeg failed: {e}')
-        return 4
-    finally:
-        shutil.rmtree(work, ignore_errors=True)
-
-    log(f'MP4 saved: {output} ({output.stat().st_size} bytes)')
+        make_video(args.seconds, args.fps, out)
+        print(f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] MP4 saved: {out} ({out.stat().st_size} bytes)", flush=True)
+    except Exception as e:
+        write_status(ok=False, recording=False, message=str(e), output=str(out))
+        print(f"MP4 ERROR: {e}", file=sys.stderr)
+        return 1
     return 0
-
-
-if __name__ == '__main__':
-    sys.exit(main())
+if __name__ == "__main__":
+    raise SystemExit(main())
