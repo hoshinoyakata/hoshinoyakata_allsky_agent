@@ -136,6 +136,9 @@ def read_rain(): return {'label':'未接続','message':'雨センサー未使用
 @app.route('/')
 def index():
     s=cfg(); return render_template('index.html',site_name=s['site_name'],version=s['version'])
+@app.route('/mobile')
+def mobile_view():
+    return render_template('mobile.html')
 @app.route('/api/status')
 def status():
     s=cfg(); st=state(); lp=latest_img(); mode=s['camera'].get('night_mode','auto'); active=night() if mode=='auto' else mode in ['low','medium','high','extreme','night']; cp,cm=cloud(lp,active)
