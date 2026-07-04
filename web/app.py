@@ -132,6 +132,19 @@ def read_wind():
     except Exception: return {'mps':0.0,'deg':0,'gust':0.0,'message':'風速未読込'}
 def read_rain(): return {'label':'雨なし','message':'雨センサー未使用'}
 
+def log(msg):
+    return safe_log(msg)
+
+def safe_log(msg):
+    try:
+        with (LOG / "system.log").open("a", encoding="utf-8") as f:
+            f.write(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "  " + str(msg) + "\n")
+    except Exception:
+        try:
+            print(msg)
+        except Exception:
+            pass
+
 CAPTURE_LOCK = threading.Lock()
 AUTO_THREAD_STARTED = False
 
@@ -162,7 +175,7 @@ def do_capture(reason="auto"):
             st["camera_status"] = "error"
             st["last_error"] = "カメラコマンドなし"
             save_state(st)
-            log(f"{reason}: カメラコマンドなし")
+            safe_log(f"{reason}: カメラコマンドなし")
             return False, None, "カメラコマンドなし"
 
         r = run(cmd, 120)
@@ -178,7 +191,7 @@ def do_capture(reason="auto"):
             st["camera_status"] = "error"
             st["last_error"] = (r.stderr or "撮影失敗")[-300:]
             save_state(st)
-            log(f"{reason}: 撮影失敗 {(r.stderr or '')[-300:]}")
+            safe_log(f"{reason}: 撮影失敗 {(r.stderr or '')[-300:]}")
             return False, None, (r.stderr or "撮影失敗")[-800:]
 
 def auto_capture_loop():
@@ -198,7 +211,7 @@ def auto_capture_loop():
             else:
                 time.sleep(2)
         except Exception as e:
-            log("auto_capture_loop error: " + str(e))
+            safe_log("auto_capture_loop error: " + str(e))
             time.sleep(5)
 
 def start_auto_capture_once():
@@ -208,7 +221,7 @@ def start_auto_capture_once():
     AUTO_THREAD_STARTED = True
     th = threading.Thread(target=auto_capture_loop, daemon=True)
     th.start()
-    log("Ver.4.5 auto live capture thread started")
+    safe_safe_log("Ver.4.6 auto live capture thread started")
 
 start_auto_capture_once()
 
