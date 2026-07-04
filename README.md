@@ -1,37 +1,29 @@
-# 星の館 全天カメラAIエージェント Ver.5.1 Live Stop Fix
+# 星の館 全天カメラ Ver5.5 NAS MP4対応パッチ
 
-## 修正内容
-Ver.5.0でLIVE停止ボタンを押しても撮影が止まらない問題を修正しました。
+## 目的
+既に成功している NAS 静止画保存に加えて、MP4動画・システムログも NAS に保存するためのパッチです。
 
-原因:
-外部自動撮影サービス `hoshinoyakata-capture` が `config/settings.json` の
-`camera.auto_capture_enabled` を見ずに撮影し続けていました。
+## 保存先
+- 静止画: `/mnt/hoshinoyakata_nas/全天カメラ`
+- MP4動画: `/mnt/hoshinoyakata_nas/全天カメラ/MP4動画`
+- システムログ: `/mnt/hoshinoyakata_nas/全天カメラ/システムログ`
 
-修正:
-- `scripts/live_capture_loop.py` が `auto_capture_enabled` を毎回確認
-- LIVE停止時は撮影を停止
-- LIVE開始時は撮影を再開
-- `data/capture_status.json` に LIVE ON / LIVE停止中 を記録
-- 星空モードは従来通り機能
+## インストール
+ラズパイの `~/hoshinoyakata_allsky_agent_real_v2` にこのフォルダを置いて、以下を実行します。
 
-## 更新方法
 ```bash
-cd ~/hoshinoyakata_allsky_agent_real_v2
-bash scripts/install.sh
+chmod +x install_mp4_nas_v55.sh
+./install_mp4_nas_v55.sh
 ```
 
-## 確認方法
-1. ブラウザで Ctrl + F5
-2. LIVE停止を押す
-3. 10秒待つ
-4. 直近キャプチャの時刻が進まなければ成功
-5. LIVE開始を押す
-6. 数秒ごとに時刻が進めば成功
-
-## ターミナル確認
+## MP4録画テスト
 ```bash
-tail -f ~/hoshinoyakata_allsky_agent_real_v2/data/logs/live_capture.log
+./scripts/mp4_record_nas.py --seconds 30
+ls -lt "/mnt/hoshinoyakata_nas/全天カメラ/MP4動画" | head
 ```
 
-LIVE停止で `LIVE disabled - capture paused`、
-LIVE開始で `LIVE enabled` が出ます。
+## 仕組み
+`latest.jpg` を一定間隔で集め、ffmpegでMP4化します。カメラを直接奪わないため、現在のライブ配信を止めにくい安全方式です。
+
+## 注意
+NASがマウントされていない場合はエラーで停止します。先に `/mnt/hoshinoyakata_nas/全天カメラ` が見える状態にしてください。
