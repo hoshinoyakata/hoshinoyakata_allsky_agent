@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>星の館 全天カメラ Mobile</title>
+  <style>
+    :root{--bg:#07111f;--panel:rgba(12,25,45,.92);--line:rgba(125,180,255,.25);--text:#eaf4ff;--muted:#9db3c8;--good:#2ef28f;--warn:#ffc84d;--bad:#ff5b6e}
+    *{box-sizing:border-box}html,body{margin:0;padding:0;width:100%;min-height:100%;background:radial-gradient(circle at top,#13233c 0%,var(--bg) 55%,#030811 100%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    .wrap{width:100%;max-width:980px;margin:0 auto;padding:10px}header{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px}
+    h1{font-size:17px;line-height:1.2;margin:0;font-weight:800}.sub{color:var(--muted);font-size:11px;margin-top:2px}
+    .badge{padding:7px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:12px;white-space:nowrap}.live{color:var(--good);font-weight:800}.offline{color:var(--bad);font-weight:800}
+    .image-card{position:relative;width:100%;background:#000;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 14px 40px rgba(0,0,0,.35)}
+    .sky{display:block;width:100%;height:auto;max-height:72vh;object-fit:contain;background:#000}.image-info{position:absolute;left:8px;bottom:8px;right:8px;display:flex;justify-content:space-between;gap:8px;align-items:center;pointer-events:none}
+    .pill{background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(8px);border-radius:999px;padding:6px 9px;font-size:12px;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.6)}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}.box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;min-height:62px}.label{font-size:11px;color:var(--muted);margin-bottom:4px}.value{font-size:21px;font-weight:800;letter-spacing:-.3px}.unit{font-size:12px;color:var(--muted);margin-left:2px;font-weight:700}
+    .wide{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px}.buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+    button,a.btn{border:1px solid var(--line);background:linear-gradient(180deg,#196fc7,#1458a0);color:white;padding:12px 10px;border-radius:14px;font-weight:800;font-size:14px;text-decoration:none;text-align:center;display:block}.secondary{background:linear-gradient(180deg,#263a58,#17263d)}
+    .foot{color:var(--muted);text-align:center;font-size:11px;padding:10px 4px 4px}.err{color:var(--warn);font-size:12px;text-align:center;padding:7px;min-height:27px}
+    @media (orientation:landscape) and (max-height:520px){.wrap{max-width:none;display:grid;grid-template-columns:minmax(320px,1.6fr) minmax(260px,.9fr);gap:8px;align-items:start}header{grid-column:1/-1;margin-bottom:0}.grid{margin-top:0}.sky{max-height:76vh}.buttons{grid-column:2}.foot,.err{grid-column:1/-1}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header><div><h1>🌌 星の館 全天カメラ</h1><div class="sub">Mobile Live View / Ver.5.5</div></div><div class="badge"><span id="liveText" class="offline">確認中</span></div></header>
+    <main class="image-card"><img id="skyImage" class="sky" alt="全天カメラ画像"><div class="image-info"><div class="pill">最終画像 <span id="lastTime">--:--:--</span></div><div class="pill">更新 <span id="ageText">--</span></div></div></main>
+    <section class="grid">
+      <div class="box"><div class="label">気温</div><div class="value"><span id="temp">--</span><span class="unit">°C</span></div></div>
+      <div class="box"><div class="label">湿度</div><div class="value"><span id="hum">--</span><span class="unit">%</span></div></div>
+      <div class="box"><div class="label">気圧</div><div class="value"><span id="press">--</span><span class="unit">hPa</span></div></div>
+      <div class="wide"><div class="box"><div class="label">雲量</div><div class="value"><span id="cloud">--</span><span class="unit">%</span></div></div><div class="box"><div class="label">SQM</div><div class="value"><span id="sqm">--</span></div></div></div>
+    </section>
+    <section class="buttons"><button onclick="refreshNow()">🔄 今すぐ更新</button><button class="secondary" onclick="fullScreenImage()">⛶ 全画面</button><a class="btn secondary" href="/">PC版を開く</a><button class="secondary" onclick="toggleFit()">表示切替</button></section>
+    <div id="err" class="err"></div><div class="foot">同じWi‑Fi内: http://192.168.1.20:5000/mobile</div>
+  </div>
+  <script>
+    const img=document.getElementById("skyImage");let fitContain=true;
+    function pick(o,ks,fb="--"){for(const k of ks){if(o&&o[k]!==undefined&&o[k]!==null&&o[k]!=="")return o[k]}return fb}
+    function num(v,d=1){const n=Number(v);return Number.isFinite(n)?n.toFixed(d):"--"}
+    function imageUrl(name){if(!name)return "";return String(name).startsWith("/")?name+"?ts="+Date.now():"/images/"+name+"?ts="+Date.now()}
+    async function refreshNow(){const err=document.getElementById("err");try{const r=await fetch("/api/status?mobile=1&ts="+Date.now(),{cache:"no-store"});const ct=r.headers.get("content-type")||"";if(!ct.includes("application/json"))throw new Error("APIがJSONではありません");const s=await r.json();const b=s.bme280||{};const latest=pick(s,["latest_image","image","filename"],"");if(latest)img.src=imageUrl(latest);const live=String(pick(s,["live","camera_status"],"")).toLowerCase();const isLive=s.auto_capture_enabled===true||live==="live"||live==="on";const lt=document.getElementById("liveText");lt.textContent=isLive?"LIVE":"OFFLINE";lt.className=isLive?"live":"offline";document.getElementById("lastTime").textContent=pick(s,["latest_mtime","last_time","time"],"--:--:--");document.getElementById("ageText").textContent=pick(s,["latest_age_label","age_label"],"--");document.getElementById("temp").textContent=num(pick(b,["temperature"],pick(s,["temperature"],NaN)),1);document.getElementById("hum").textContent=num(pick(b,["humidity"],pick(s,["humidity"],NaN)),1);document.getElementById("press").textContent=num(pick(b,["pressure"],pick(s,["pressure"],NaN)),1);document.getElementById("cloud").textContent=num(pick(s,["cloud","cloud_percent","cloud_cover"],NaN),0);document.getElementById("sqm").textContent=num(pick(s,["sqm"],NaN),1);err.textContent=""}catch(e){err.textContent="更新エラー: "+e.message}}
+    function fullScreenImage(){if(img.requestFullscreen)img.requestFullscreen();else if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen()}
+    function toggleFit(){fitContain=!fitContain;img.style.objectFit=fitContain?"contain":"cover";img.style.height=fitContain?"auto":"72vh"}
+    refreshNow();setInterval(refreshNow,8000);
+  </script>
+</body>
+</html>
