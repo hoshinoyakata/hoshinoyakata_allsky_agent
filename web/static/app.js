@@ -143,11 +143,28 @@ async function setNightMode(mode){
   loadStatus(true);
 }
 
+
 function toggleFullscreen(){
   const el=$("viewer");
-  if(!document.fullscreenElement)el.requestFullscreen?.();
-  else document.exitFullscreen?.();
+  if(!document.fullscreenElement){
+    el.classList.add("fullscreen-active");
+    const req=el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen;
+    if(req) req.call(el);
+  }else{
+    const exit=document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen;
+    if(exit) exit.call(document);
+  }
 }
+
+document.addEventListener("fullscreenchange",()=>{
+  const el=$("viewer");
+  if(!document.fullscreenElement && el) el.classList.remove("fullscreen-active");
+});
+document.addEventListener("webkitfullscreenchange",()=>{
+  const el=$("viewer");
+  if(!document.webkitFullscreenElement && el) el.classList.remove("fullscreen-active");
+});
+
 
 function renderThumbs(items){
   const el=$("thumbs"); if(!el)return;

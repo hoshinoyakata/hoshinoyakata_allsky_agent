@@ -1,5 +1,5 @@
 {
-  "version": "4.3 Live Refresh Fix",
+  "version": "4.4 Fullscreen Max",
   "site_name": "星の館 全天カメラAIエージェント",
   "camera": {
     "width": 3072,
@@ -33,6 +33,8 @@
     "active_low": true
   },
   "ui": {
-    "thumb_label": "actual_time"
+    "thumb_label": "actual_time",
+    "fullscreen_scale": "96vh",
+    "image_scale": 1.0
   }
 }
