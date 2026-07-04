@@ -1,5 +1,5 @@
 {
-  "version": "4.2 Pressure Live Fix",
+  "version": "4.3 Live Refresh Fix",
   "site_name": "星の館 全天カメラAIエージェント",
   "camera": {
     "width": 3072,
@@ -31,5 +31,8 @@
     "enabled": false,
     "gpio_pin": 27,
     "active_low": true
+  },
+  "ui": {
+    "thumb_label": "actual_time"
   }
 }

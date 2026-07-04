@@ -20,7 +20,29 @@ def night():
     h=datetime.now().hour; return h>=18 or h<=5
 def latest_img():
     fs=sorted(IMG.glob('*.jpg'),key=lambda p:p.stat().st_mtime,reverse=True); return fs[0] if fs else None
-def recent(n=5): return [p.name for p in sorted(IMG.glob('*.jpg'),key=lambda p:p.stat().st_mtime,reverse=True)[:n]]
+def recent(n=5):
+    return [p.name for p in sorted(IMG.glob('*.jpg'), key=lambda p: p.stat().st_mtime, reverse=True)[:n]]
+
+def recent_detail(n=5):
+    now = time.time()
+    items = []
+    for p in sorted(IMG.glob('*.jpg'), key=lambda p: p.stat().st_mtime, reverse=True)[:n]:
+        mt = p.stat().st_mtime
+        age = max(0, int(now - mt))
+        if age < 60:
+            age_label = f"{age}秒前"
+        elif age < 3600:
+            age_label = f"{age//60}分前"
+        else:
+            age_label = f"{age//3600}時間前"
+        items.append({
+            "name": p.name,
+            "mtime": mt,
+            "time": datetime.fromtimestamp(mt).strftime("%H:%M:%S"),
+            "age": age,
+            "age_label": age_label
+        })
+    return items
 def moon_age():
     e=datetime(2000,1,6,18,14,tzinfo=timezone.utc); return round(((datetime.now(timezone.utc)-e).total_seconds()/86400)%29.53058867,1)
 def still_cmd(out):
@@ -116,7 +138,7 @@ def index():
 def status():
     s=cfg(); st=state(); lp=latest_img(); mode=s['camera'].get('night_mode','auto'); active=night() if mode=='auto' else mode in ['low','medium','high','extreme','night']; cp,cm=cloud(lp,active)
     ip=run("hostname -I | awk '{print $1}'",5).stdout.strip(); up=run('uptime -p',5).stdout.strip().replace('up ','')
-    return jsonify(ok=True,version=s['version'],latest_image=lp.name if lp else None,latest_mtime=lp.stat().st_mtime if lp else None,recent_images=recent(),bme280=read_bme(),cloud=cp,cloud_message=cm,moon_age=round(moon_age()),sqm=20.6,wind=read_wind(),rain=read_rain(),system={'ip':ip,'uptime':up},live=st.get('live','on'),recording=st.get('recording',False),camera_status=st.get('camera_status','live'),night={'mode':mode,'active':active,'exposure_us':s['camera'].get('night_exposure_us',1800000),'gain':s['camera'].get('night_gain',20)})
+    return jsonify(ok=True,version=s['version'],latest_image=lp.name if lp else None,latest_mtime=lp.stat().st_mtime if lp else None,recent_images=recent_detail(),bme280=read_bme(),cloud=cp,cloud_message=cm,moon_age=round(moon_age()),sqm=20.6,wind=read_wind(),rain=read_rain(),system={'ip':ip,'uptime':up},live=st.get('live','on'),recording=st.get('recording',False),camera_status=st.get('camera_status','live'),night={'mode':mode,'active':active,'exposure_us':s['camera'].get('night_exposure_us',1800000),'gain':s['camera'].get('night_gain',20)})
 @app.route('/api/control',methods=['POST'])
 def control():
     action=(request.get_json(force=True,silent=True) or {}).get('action',''); st=state(); msg='操作しました'
