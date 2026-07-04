@@ -1,5 +1,5 @@
 {
-  "version": "4.4 Fullscreen Max",
+  "version": "4.5 Auto Live Capture",
   "site_name": "星の館 全天カメラAIエージェント",
   "camera": {
     "width": 3072,
@@ -9,7 +9,10 @@
     "night_gain": 20,
     "photo_timeout_ms_day": 1000,
     "photo_timeout_ms_night": 2500,
-    "live_poll_seconds": 2
+    "live_poll_seconds": 2,
+    "auto_capture_enabled": true,
+    "live_capture_seconds": 5,
+    "keep_images": 1200
   },
   "bme280": {
     "enabled": true,
