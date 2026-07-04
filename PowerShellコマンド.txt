@@ -1,0 +1,2 @@
+scp .\live_capture_loop.py pi@192.168.1.20:/home/pi/hoshinoyakata_allsky_agent_real_v2/scripts/live_capture_loop.py
+ssh pi@192.168.1.20 "sudo systemctl restart hoshinoyakata-capture"
