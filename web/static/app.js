@@ -87,7 +87,7 @@ async function loadStatus(force=false){
     setText("exposureLabel",n.exposure_us?`${Math.round(n.exposure_us/100000)/10} sec`:"AUTO");
     setText("gainLabel",n.gain?`${n.gain}.0 dB`:"AUTO");
 
-    setText("autoCap", s.auto_capture_enabled ? `${s.live_capture_seconds||5}秒ごと` : "OFF");
+    setText("autoCap", s.auto_capture_enabled ? `外部 ${s.live_capture_seconds||5}秒` : "OFF");
     setLiveBadge(s.camera_status,s.recording,s.live);
   }catch(e){
     setText("message","状態取得エラー: "+e);

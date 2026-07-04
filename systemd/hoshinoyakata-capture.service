@@ -1,0 +1,13 @@
+[Unit]
+Description=Hoshinoyakata Allsky External Live Capture
+After=network.target hoshinoyakata-allsky.service
+
+[Service]
+WorkingDirectory=/home/pi/hoshinoyakata_allsky_agent_real_v2
+ExecStart=/home/pi/hoshinoyakata_allsky_agent_real_v2/venv/bin/python /home/pi/hoshinoyakata_allsky_agent_real_v2/scripts/live_capture_loop.py
+Restart=always
+RestartSec=5
+User=pi
+
+[Install]
+WantedBy=multi-user.target

@@ -2,7 +2,7 @@
 from flask import Flask,jsonify,render_template,send_from_directory,request
 from pathlib import Path
 from datetime import datetime,timezone
-import json,shutil,subprocess,time,math,colorsys,threading
+import json,shutil,subprocess,time,math,colorsys
 BASE=Path(__file__).resolve().parents[1]
 IMG=BASE/'data/images';VID=BASE/'data/videos';LOG=BASE/'data/logs';CONFIG=BASE/'config/settings.json';STATE=BASE/'data/state.json'
 IMG.mkdir(parents=True,exist_ok=True);VID.mkdir(parents=True,exist_ok=True);LOG.mkdir(parents=True,exist_ok=True)
@@ -131,101 +131,6 @@ def read_wind():
         return {'mps':mps,'deg':0,'gust':round(mps*1.8,1),'message':f'GPIO{pin} {count}p'}
     except Exception: return {'mps':0.0,'deg':0,'gust':0.0,'message':'風速未読込'}
 def read_rain(): return {'label':'雨なし','message':'雨センサー未使用'}
-
-def log(msg):
-    return safe_log(msg)
-
-def safe_log(msg):
-    try:
-        with (LOG / "system.log").open("a", encoding="utf-8") as f:
-            f.write(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "  " + str(msg) + "\n")
-    except Exception:
-        try:
-            print(msg)
-        except Exception:
-            pass
-
-CAPTURE_LOCK = threading.Lock()
-AUTO_THREAD_STARTED = False
-
-def cleanup_images():
-    try:
-        keep = int(cfg().get("camera", {}).get("keep_images", 1200))
-        files = sorted(IMG.glob("*.jpg"), key=lambda p: p.stat().st_mtime, reverse=True)
-        for p in files[keep:]:
-            try:
-                p.unlink()
-            except Exception:
-                pass
-    except Exception:
-        pass
-
-def do_capture(reason="auto"):
-    """
-    Ver.4.5:
-    LIVE表示用にサーバー側で定期撮影する。
-    ブラウザ側の2秒更新は「新しいjpgがあるか確認する」だけなので、
-    ここで新しいjpgを作る。
-    """
-    with CAPTURE_LOCK:
-        out = IMG / f"allsky_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
-        cmd = still_cmd(out)
-        if not cmd:
-            st = state()
-            st["camera_status"] = "error"
-            st["last_error"] = "カメラコマンドなし"
-            save_state(st)
-            safe_log(f"{reason}: カメラコマンドなし")
-            return False, None, "カメラコマンドなし"
-
-        r = run(cmd, 120)
-        ok = (r.returncode == 0 and out.exists())
-        st = state()
-        if ok:
-            st["camera_status"] = "live" if st.get("live") == "on" else "offline"
-            st["last_error"] = ""
-            save_state(st)
-            cleanup_images()
-            return True, out.name, "保存しました"
-        else:
-            st["camera_status"] = "error"
-            st["last_error"] = (r.stderr or "撮影失敗")[-300:]
-            save_state(st)
-            safe_log(f"{reason}: 撮影失敗 {(r.stderr or '')[-300:]}")
-            return False, None, (r.stderr or "撮影失敗")[-800:]
-
-def auto_capture_loop():
-    while True:
-        try:
-            s = cfg()
-            c = s.get("camera", {})
-            st = state()
-            interval = max(2, int(c.get("live_capture_seconds", 5)))
-            enabled = bool(c.get("auto_capture_enabled", True))
-            live_on = st.get("live", "on") == "on"
-            recording = bool(st.get("recording", False))
-
-            if enabled and live_on and not recording:
-                do_capture("auto-live")
-                time.sleep(interval)
-            else:
-                time.sleep(2)
-        except Exception as e:
-            safe_log("auto_capture_loop error: " + str(e))
-            time.sleep(5)
-
-def start_auto_capture_once():
-    global AUTO_THREAD_STARTED
-    if AUTO_THREAD_STARTED:
-        return
-    AUTO_THREAD_STARTED = True
-    th = threading.Thread(target=auto_capture_loop, daemon=True)
-    th.start()
-    safe_safe_log("Ver.4.6 auto live capture thread started")
-
-start_auto_capture_once()
-
-
 @app.route('/')
 def index():
     s=cfg(); return render_template('index.html',site_name=s['site_name'],version=s['version'])
@@ -247,14 +152,12 @@ def control():
 @app.route('/api/night_mode',methods=['POST'])
 def night_mode():
     mode=(request.get_json(force=True,silent=True) or {}).get('mode','auto'); s=cfg(); s['camera']['night_mode']=mode; save_cfg(s); return jsonify(ok=True,message=f'星空感度: {mode}')
-@app.route("/api/capture", methods=["POST"])
+@app.route('/api/capture',methods=['POST'])
 def capture():
-    st = state()
-    st["camera_status"] = "capture"
-    save_state(st)
-    ok, filename, msg = do_capture("manual")
-    return jsonify(ok=ok, filename=filename, message=msg)
-
+    st=state(); st['camera_status']='capture'; save_state(st); out=IMG/f"allsky_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"; cmd=still_cmd(out)
+    if not cmd: return jsonify(ok=False,message='カメラコマンドなし')
+    r=run(cmd,120); ok=r.returncode==0 and out.exists(); st['camera_status']='live' if st.get('live')=='on' else 'offline'; save_state(st)
+    return jsonify(ok=ok,filename=out.name,message='保存しました' if ok else (r.stderr or '撮影失敗')[-800:])
 @app.route('/api/video',methods=['POST'])
 def video():
     st=state(); st['recording']=True; st['camera_status']='recording'; save_state(st); return jsonify(ok=True,message='録画開始状態にしました')

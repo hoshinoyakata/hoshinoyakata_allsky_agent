@@ -1,5 +1,5 @@
 {
-  "version": "4.6 Startup Fix",
+  "version": "4.7 External Capture Stable",
   "site_name": "星の館 全天カメラAIエージェント",
   "camera": {
     "width": 3072,
@@ -12,7 +12,8 @@
     "live_poll_seconds": 2,
     "auto_capture_enabled": true,
     "live_capture_seconds": 5,
-    "keep_images": 1200
+    "keep_images": 1200,
+    "capture_timeout_seconds": 30
   },
   "bme280": {
     "enabled": true,
